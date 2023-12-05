@@ -45,7 +45,7 @@ struct {
     DynObj cloud3;
 } game = {.paused = true,
           .score = 0,
-          .initial = 'Y',
+          .initial = 'Z',
           .isAlive = true,
           .bee = {.active = false, .speedPxSec = 0.0},
           .cloud1 = {.active = false, .speedPxSec = 0.0},

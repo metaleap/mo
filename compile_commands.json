@@ -1,7 +1,7 @@
 [
     {
-        "dir": "/home/_/c/c/mo",
+        "directory": "/home/_/c/c/mo",
         "file": "mo2d/main.cpp",
-        "arguments": [ "clang++", "mo2d/main.cpp", "-o", "/home/_/.local/bin/mo2d_dbg", "-O0" ]
+        "arguments": [ "clang++", "-c", "-g", "-Ilibdeps/SFML/include", "mo2d/main.cpp", "-o", "/home/_/.local/bin/mo2d_dbg", "-O0" ]
     }
 ]

@@ -7,7 +7,6 @@
             "type": "shell",
             "label": "build_mo2d",
             "command": "make",
-            "args": [ "build_mo2d" ],
             "options": {
                 "cwd": "/home/_/c/c/mo"
             },
