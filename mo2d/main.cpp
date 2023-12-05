@@ -1,3 +1,14 @@
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <ostream>
+#include <string>
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/Color.hpp>
@@ -15,15 +26,9 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <ostream>
-#include <string>
+
+#include <imgui.h>
+#include <imgui-SFML.h>
 
 const float timeBarStartingWidth = 600;
 const float timeLimitSec = 6;
@@ -81,7 +86,7 @@ void updTreeBranches();
 
 int main() {
     std::printf("You got _that_ right. This here is the one 'Console' this'll "
-                "run on.\n...or will it?...");
+                "run on.\n...or will it?...\n");
     std::fflush(stdout);
 
     std::srand((int)(std::time(nullptr)));
@@ -89,6 +94,12 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "gamedev");
     window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
     window.setVerticalSyncEnabled(true);
+
+    assert(ImGui::SFML::Init(window, false));
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+    const auto font = io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 55);
+    assert(ImGui::SFML::UpdateFontTexture());
 
     sf::Clock clock;
     clock.restart();
@@ -102,12 +113,15 @@ int main() {
             time_remaining_sec = timeLimitSec;
 
         // INPUT
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if ((event.type == sf::Event::Closed) || sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+        sf::Event evt;
+        while (window.pollEvent(evt)) {
+            ImGui::SFML::ProcessEvent(window, evt);
+
+            if ((evt.type == sf::Event::Closed) || sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
                 window.close();
+                ImGui::SFML::Shutdown();
                 return 0;
-            } else if ((event.type == sf::Event::KeyPressed) && (event.key.code == sf::Keyboard::Enter)) {
+            } else if ((evt.type == sf::Event::KeyPressed) && (evt.key.code == sf::Keyboard::Enter)) {
                 time_remaining_sec = timeLimitSec;
                 game.paused = !game.paused;
             }
@@ -139,6 +153,15 @@ int main() {
         sf::Time timeTotal;
         res.timeBar.setSize(sf::Vector2f((timeBarStartingWidth / timeLimitSec) * time_remaining_sec, 77));
 
+        ImGui::SFML::Update(window, delta);
+        ImGui::PushFont(font);
+        ImGui::ShowDemoWindow();
+        ImGui::Begin("Hello, world!");
+        if (ImGui::Button("Look at this pretty button"))
+            ImGui::Text("You clicked");
+        ImGui::End();
+        ImGui::PopFont();
+
         // RENDER
         window.clear();
         window.draw(res.bgSprite);
@@ -149,9 +172,11 @@ int main() {
         window.draw(res.beeSprite);
         window.draw(res.scoreText);
         window.draw(res.timeBar);
+        ImGui::SFML::Render(window);
         window.display();
     }
 
+    ImGui::SFML::Shutdown();
     return 0;
 }
 
