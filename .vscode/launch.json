@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run mo2d",
+            "type": "gdb",
+            "request": "launch",
+            "target": "/home/_/.local/bin/mo2d_dbg",
+            "cwd": "${fileDirname}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "build_mo2d"
+        }
+    ]
+}
