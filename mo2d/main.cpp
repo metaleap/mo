@@ -27,8 +27,8 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 
-#include "game/game.h"
-#include "gui/gui.h"
+#include "./game/game.h"
+#include "./gui/gui.h"
 
 
 int main() {

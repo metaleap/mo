@@ -1,9 +1,10 @@
-#include <SFML/Window/Event.hpp>
 #include <cassert>
 
 #include "imgui.h"
 #include "imgui-SFML.h"
+
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Event.hpp>
 
 #include "./gui.h"
 

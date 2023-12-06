@@ -1,1 +1,1 @@
-go run ./makemake.go -- mo mo2d
+go run ./makemake.go mo2d
