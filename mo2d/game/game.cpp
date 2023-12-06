@@ -5,7 +5,7 @@
 #include <SFML/Graphics/Text.hpp>
 
 #include "./game.h"
-
+#include <SFML/System/Time.hpp>
 
 const float_t timeBarStartingWidth = 600;
 
