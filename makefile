@@ -5,7 +5,7 @@ CXXFLAGS = --debug -std=c++20 -march=native
 
 
 bin/mo2d: bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_game_game.o
-	$(CXX) $(CXXFLAGS) -Lbin -lsfml-graphics -lsfml-window -lsfml-system -lGL -limgui -limgui-sfml bin/mo2d_game_game.o bin/mo2d_main.o bin/mo2d_gui_gui.o -o bin/mo2d
+	$(CXX) $(CXXFLAGS) -Lbin -lsfml-graphics -lsfml-window -lsfml-system -lGL -limgui -limgui-sfml bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_game_game.o -o bin/mo2d
 
 clean:
 	rm -f bin/*.o
