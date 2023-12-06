@@ -1,5 +1,10 @@
+
+CXX = g++
+CXXFLAGS = --debug -std=c++20 -march=native
+
 mo2d: bin/mo2d_main.o
 	bin/mo2d_main.o
+	$(CXX) $(CXXFLAGS) -Lbin -lsfml-graphics -lsfml-window -lsfml-system -lGL -limgui -limgui-sfml bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_game_game.o -o bin/mo2d
 
 bin/mo2d_game_game.o: mo2d/game/game.cpp, mo2d/game/game.h, mo2d/game/game.cpp, bin/mo2d_game_game.o
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui-sfml mo2d/game/game.cpp -o bin/mo2d_game_game.o

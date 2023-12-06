@@ -8,10 +8,16 @@ import (
 	"strings"
 )
 
+const makefileHead = `
+CXX = g++
+CXXFLAGS = --debug -std=c++20 -march=native
+
+`
+
 var (
-	strEnds   = strings.HasSuffix
-	strBegins = strings.HasPrefix
-	strLibs   = map[string][]string{
+	strEnds      = strings.HasSuffix
+	strBegins    = strings.HasPrefix
+	everLibNames = map[string][]string{
 		"mo2d": {"sfml-graphics", "sfml-window", "sfml-system", "GL"},
 	}
 )
@@ -74,12 +80,24 @@ func main() {
 	}
 
 	var buf strings.Builder
+	buf.WriteString(makefileHead)
 	for _, rule := range rules { //bin/mo2d_main.o
 		for _, executable_name := range executable_names {
 			if rule.outPath == "bin/"+executable_name+"_main.o" {
 				buf.WriteString(executable_name + ": " + rule.outPath + "\n\t" + rule.outPath + "\n")
 				buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
-				buf.WriteString("\n")
+				for _, lib_name := range everLibNames[executable_name] {
+					buf.WriteString(" -l" + lib_name)
+				}
+				for _, lib_name := range lib_dep_names {
+					buf.WriteString(" -l" + lib_name)
+				}
+				obj_file_paths := map[string]bool{}
+				gatherObjFileNamesFor(rules, obj_file_paths, rule.outPath)
+				for obj_file_path := range obj_file_paths {
+					buf.WriteString(" " + obj_file_path)
+				}
+				buf.WriteString(" -o bin/" + executable_name + "\n")
 
 				buf.WriteString("\n")
 				break
@@ -101,6 +119,21 @@ func iIf[T any](b bool, t T, f T) T {
 		return t
 	}
 	return f
+}
+
+func gatherObjFileNamesFor(rules []makeRule, into map[string]bool, forObjFilePath string) {
+	if into[forObjFilePath] {
+		return
+	}
+	into[forObjFilePath] = true
+	idx_rule := slices.IndexFunc(rules, func(it makeRule) bool { return (it.outPath == forObjFilePath) })
+	if idx_rule > 0 {
+		for _, dep_path := range rules[idx_rule].depPaths {
+			if strEnds(dep_path, ".o") {
+				gatherObjFileNamesFor(rules, into, dep_path)
+			}
+		}
+	}
 }
 
 func fsCppPathToObjPath(fsPath string) string {
