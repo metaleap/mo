@@ -13,14 +13,15 @@ Gui::Gui(sf::RenderWindow &win) : window(win) {
     imgui_io.IniFilename = "/home/_/.config/mo2d_dbg.config";
     imgui_io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     this->font = imgui_io.Fonts->AddFontDefault();
+    this->font = imgui_io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 44);
     assert(ImGui::SFML::UpdateFontTexture());
 }
 
-void Gui::processEvent(const sf::Event evt) {
+void Gui::onInput(const sf::Event evt) {
     ImGui::SFML::ProcessEvent(this->window, evt);
 }
 
-void Gui::update(const sf::Time delta) {
+void Gui::onUpdate(const sf::Time delta) {
     ImGui::SFML::Update(window, delta);
     ImGui::PushFont(font);
     ImGui::ShowDemoWindow();
@@ -32,7 +33,7 @@ void Gui::update(const sf::Time delta) {
     ImGui::PopFont();
 }
 
-void Gui::render() {
+void Gui::onRender() {
     ImGui::SFML::Render(this->window);
 }
 

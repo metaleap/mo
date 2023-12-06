@@ -10,8 +10,8 @@ struct Gui {
     ImFont* font = nullptr;
 
     Gui(sf::RenderWindow &win);
-    void processEvent(const sf::Event evt);
-    void update(const sf::Time delta);
-    void render();
+    void onInput(const sf::Event evt);
+    void onUpdate(const sf::Time delta);
+    void onRender();
     void onShutDown();
 };
