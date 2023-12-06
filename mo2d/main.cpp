@@ -97,6 +97,7 @@ int main() {
 
     assert(ImGui::SFML::Init(window, false));
     ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
     io.Fonts->AddFontDefault();
     const auto font = io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 55);
     assert(ImGui::SFML::UpdateFontTexture());

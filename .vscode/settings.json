@@ -1,0 +1,10 @@
+{
+    "files.exclude": {
+        "**/.cache": true,
+        "**/*.so": true
+    },
+    "search.exclude": {
+        "**/.cache": true,
+        "**/*.so": true
+    }
+}
