@@ -27,9 +27,7 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 
-#include <imgui.h>
-#include <misc/cpp/imgui_stdlib.h>
-#include <imgui-SFML.h>
+#include "gui/gui.h"
 
 const float timeBarStartingWidth = 600;
 const float timeLimitSec = 6;
@@ -82,7 +80,7 @@ struct {
 } res;
 
 void setupAndLoadResources();
-void updCloud(DynObj&, sf::Sprite&, const sf::Time&);
+void updCloud(DynObj &, sf::Sprite &, const sf::Time &);
 void updTreeBranches();
 
 int main() {
@@ -96,13 +94,7 @@ int main() {
     window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
     window.setVerticalSyncEnabled(true);
 
-    assert(ImGui::SFML::Init(window, false));
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = "/home/_/.config/mo2d_dbg.config";
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.Fonts->AddFontDefault();
-    const auto font = io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 44);
-    assert(ImGui::SFML::UpdateFontTexture());
+    Gui gui(window);
 
     sf::Clock clock;
     clock.restart();
@@ -118,11 +110,11 @@ int main() {
         // INPUT
         sf::Event evt;
         while (window.pollEvent(evt)) {
-            ImGui::SFML::ProcessEvent(window, evt);
+            gui.processEvent(evt);
 
             if ((evt.type == sf::Event::Closed) || sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
                 window.close();
-                ImGui::SFML::Shutdown();
+                gui.onShutDown();
                 return 0;
             } else if ((evt.type == sf::Event::KeyPressed) && (evt.key.code == sf::Keyboard::Enter)) {
                 time_remaining_sec = timeLimitSec;
@@ -156,15 +148,7 @@ int main() {
         sf::Time timeTotal;
         res.timeBar.setSize(sf::Vector2f((timeBarStartingWidth / timeLimitSec) * time_remaining_sec, 77));
 
-        ImGui::SFML::Update(window, delta);
-        ImGui::PushFont(font);
-        ImGui::ShowDemoWindow();
-        ImGui::ShowUserGuide();
-        ImGui::Begin("Hello, world!");
-        if (ImGui::Button("Look at this pretty button"))
-            ImGui::Text("You clicked");
-        ImGui::End();
-        ImGui::PopFont();
+        gui.update(delta);
 
         // RENDER
         window.clear();
@@ -176,15 +160,15 @@ int main() {
         window.draw(res.beeSprite);
         window.draw(res.scoreText);
         window.draw(res.timeBar);
-        ImGui::SFML::Render(window);
+        gui.render();
         window.display();
     }
 
-    ImGui::SFML::Shutdown();
+    gui.onShutDown();
     return 0;
 }
 
-void updCloud(DynObj& cloud, sf::Sprite& sprite, const sf::Time& delta) {
+void updCloud(DynObj &cloud, sf::Sprite &sprite, const sf::Time &delta) {
     if (!cloud.active) {
         cloud.speedPxSec = 22 + (std::rand() % 22);
         sprite.setPosition(-321, (rand() % 123));

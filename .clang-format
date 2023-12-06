@@ -18,5 +18,6 @@ BreakBeforeBinaryOperators: NonAssignment
 AllowShortCaseLabelsOnASingleLine: true
 IndentCaseLabels: true
 PointerAlignment: Left
+ReferenceAlignment: Right
 BreakStringLiterals: false
 ...
