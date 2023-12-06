@@ -28,6 +28,7 @@
 #include <SFML/Window/WindowStyle.hpp>
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <imgui-SFML.h>
 
 const float timeBarStartingWidth = 600;
@@ -97,9 +98,10 @@ int main() {
 
     assert(ImGui::SFML::Init(window, false));
     ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr;
+    io.IniFilename = "/home/_/.config/mo2d_dbg.config";
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.Fonts->AddFontDefault();
-    const auto font = io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 55);
+    const auto font = io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 44);
     assert(ImGui::SFML::UpdateFontTexture());
 
     sf::Clock clock;
@@ -157,6 +159,7 @@ int main() {
         ImGui::SFML::Update(window, delta);
         ImGui::PushFont(font);
         ImGui::ShowDemoWindow();
+        ImGui::ShowUserGuide();
         ImGui::Begin("Hello, world!");
         if (ImGui::Button("Look at this pretty button"))
             ImGui::Text("You clicked");
