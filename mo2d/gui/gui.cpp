@@ -28,7 +28,7 @@ void Gui::onUpdate(const sf::Time delta) {
     ImGui::ShowDemoWindow();
     ImGui::ShowUserGuide();
     ImGui::Begin("Hello, world!");
-    if (ImGui::Button("Look at this pretty button"))
+    if (ImGui::Button("Lookie a BUTT-on"))
         ImGui::Text("You clicked");
     ImGui::End();
     ImGui::PopFont();

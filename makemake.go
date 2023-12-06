@@ -67,13 +67,6 @@ func main() {
 						for _, src_file_path := range []string{h_file_path, cpp_file_path} {
 							if fsIsFile(src_file_path) && slices.Index(rule.depPaths, src_file_path) < 0 {
 								rule.depPaths = append(rule.depPaths, src_file_path)
-								if depend_on_obj_files_too := false; depend_on_obj_files_too {
-									if strEnds(src_file_path, ".cpp") {
-										if obj_file_path := fsCppPathToObjPath(src_file_path); obj_file_path != rule.outPath {
-											rule.depPaths = append(rule.depPaths, obj_file_path)
-										}
-									}
-								}
 							}
 						}
 						src = src[:idx_incl]
@@ -89,7 +82,15 @@ func main() {
 	for _, rule := range rules {
 		for _, executable_name := range executable_names {
 			if rule.outPath == "bin/"+executable_name+"_main.o" {
-				buf.WriteString("bin/" + executable_name + ": " + rule.outPath + "\n")
+				obj_file_paths, is_first := map[string]bool{}, true
+				gatherObjFileNamesFor(rules, obj_file_paths, rule.outPath)
+
+				buf.WriteString("bin/" + executable_name)
+				for obj_file_path := range obj_file_paths {
+					buf.WriteString(iIf(is_first, ": ", " ") + obj_file_path)
+					is_first = false
+				}
+				buf.WriteByte('\n')
 				buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
 				for _, lib_name := range everLibNames[executable_name] {
 					buf.WriteString(" -l" + lib_name)
@@ -97,8 +98,6 @@ func main() {
 				for _, lib_name := range lib_dep_names {
 					buf.WriteString(" -l" + lib_name)
 				}
-				obj_file_paths := map[string]bool{}
-				gatherObjFileNamesFor(rules, obj_file_paths, rule.outPath)
 				for obj_file_path := range obj_file_paths {
 					buf.WriteString(" " + obj_file_path)
 				}
@@ -119,7 +118,7 @@ func main() {
 	for _, rule := range rules {
 		buf.WriteString(rule.outPath + ": " + rule.inPath)
 		for _, dep := range rule.depPaths {
-			buf.WriteString(", " + dep)
+			buf.WriteString(" " + dep)
 		}
 		buf.WriteString("\n\t$(CXX) -c $(CXXFLAGS) -Ilibdeps/" + strings.Join(lib_dep_names, " -Ilibdeps/") + " " + rule.inPath + " -o " + rule.outPath + "\n")
 		buf.WriteByte('\n')
@@ -142,8 +141,8 @@ func gatherObjFileNamesFor(rules []makeRule, into map[string]bool, forObjFilePat
 	idx_rule := slices.IndexFunc(rules, func(it makeRule) bool { return (it.outPath == forObjFilePath) })
 	if idx_rule > 0 {
 		for _, dep_path := range rules[idx_rule].depPaths {
-			if strEnds(dep_path, ".o") {
-				gatherObjFileNamesFor(rules, into, dep_path)
+			if strEnds(dep_path, ".cpp") {
+				gatherObjFileNamesFor(rules, into, fsCppPathToObjPath(dep_path))
 			}
 		}
 	}

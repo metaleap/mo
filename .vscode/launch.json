@@ -5,8 +5,8 @@
             "name": "Run mo2d",
             "type": "gdb",
             "request": "launch",
-            "target": "/home/_/.local/bin/mo2d_dbg",
-            "cwd": "${fileDirname}",
+            "target": "mo2d",
+            "cwd": "${fileWorkspaceFolder}/bin",
             "valuesFormatting": "parseText",
             "preLaunchTask": "build_mo2d"
         }

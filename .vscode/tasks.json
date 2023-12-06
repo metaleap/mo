@@ -4,7 +4,7 @@
         {
             "type": "shell",
             "label": "build_mo2d",
-            "command": "make",
+            "command": "./build_devlocal.sh",
             "options": {
                 "cwd": "/home/_/c/c/mo"
             },

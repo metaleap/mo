@@ -21,7 +21,7 @@ struct Game {
     float time_remaining_sec = timeLimitSec;
     bool paused = true;
     int score = 0;
-    char initial = '?';
+    char initial = '!';
     bool isAlive = true;
     DynObj bee;
     DynObj cloud1;
