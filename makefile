@@ -8,7 +8,7 @@ bin/mo2d: bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_liveview_liveview.o
 	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_liveview_liveview.o -o bin/mo2d
 
 bin/mo_mapgen: bin/mo_mapgen_main.o bin/mo_mapgen_tuts.o bin/mo_mapgen_noiseutils.o
-	$(CXX) $(CXXFLAGS) -Lbin -lnoise bin/mo_mapgen_noiseutils.o bin/mo_mapgen_main.o bin/mo_mapgen_tuts.o -o bin/mo_mapgen
+	$(CXX) $(CXXFLAGS) -Lbin -lnoise bin/mo_mapgen_main.o bin/mo_mapgen_tuts.o bin/mo_mapgen_noiseutils.o -o bin/mo_mapgen
 
 clean:
 	rm -f bin/*.o

@@ -6,6 +6,7 @@
 #include <noise/module/perlin.h>
 #include "noiseutils.h"
 #include "select.h"
+#include "turbulence.h"
 
 
 
@@ -104,6 +105,63 @@ void tut_5() {
     utils::WriterBMP writer_bmp;
     writer_bmp.SetSourceImage(image);
     writer_bmp.SetDestFilename("/home/_/c/c/mo/.local/tut_5_4.bmp");
+    writer_bmp.WriteDestFile();
+
+    printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
+}
+
+void tut_6() {
+    module::RidgedMulti mountainTerrain;
+    module::Billow baseFlatTerrain;
+    baseFlatTerrain.SetFrequency(2.0);
+    module::ScaleBias flatTerrain;
+    flatTerrain.SetSourceModule(0, baseFlatTerrain);
+    flatTerrain.SetScale(0.125);
+    flatTerrain.SetBias(-0.75);
+    module::Perlin terrainType;
+    terrainType.SetFrequency(0.5);
+    terrainType.SetPersistence(0.25);
+    module::Select terrainSelector;
+    terrainSelector.SetSourceModule(0, flatTerrain);
+    terrainSelector.SetSourceModule(1, mountainTerrain);
+    terrainSelector.SetControlModule(terrainType);
+    terrainSelector.SetBounds(0.0, 1000.0);
+    terrainSelector.SetEdgeFalloff(0.125);
+    module::Turbulence finalTerrain;
+    finalTerrain.SetSourceModule(0, terrainSelector);
+    finalTerrain.SetFrequency(4.0);
+    finalTerrain.SetPower(0.125);
+
+    utils::NoiseMap heightMap;
+    utils::NoiseMapBuilderPlane heightMapBuilder;
+    // heightMapBuilder.SetSourceModule(mountainTerrain);
+    // heightMapBuilder.SetSourceModule(baseFlatTerrain);
+    // heightMapBuilder.SetSourceModule(flatTerrain);
+    heightMapBuilder.SetSourceModule(finalTerrain);
+    heightMapBuilder.SetDestNoiseMap(heightMap);
+    heightMapBuilder.SetDestSize(1024, 512);
+    heightMapBuilder.SetBounds(2.0, 10.0, 1.0, 5.0);
+    heightMapBuilder.Build();
+
+    utils::RendererImage renderer;
+    utils::Image image;
+    renderer.SetSourceNoiseMap(heightMap);
+    renderer.SetDestImage(image);
+    {
+        renderer.ClearGradient();
+        renderer.AddGradientPoint(-1.00, utils::Color(32, 160, 0, 255));   // grass
+        renderer.AddGradientPoint(-0.25, utils::Color(224, 224, 0, 255));  // dirt
+        renderer.AddGradientPoint(0.25, utils::Color(128, 128, 128, 255)); // rock
+        renderer.AddGradientPoint(1.00, utils::Color(255, 255, 255, 255)); // snow
+        renderer.EnableLight();
+        renderer.SetLightContrast(3.0);
+        renderer.SetLightBrightness(2.0);
+    }
+    renderer.Render();
+
+    utils::WriterBMP writer_bmp;
+    writer_bmp.SetSourceImage(image);
+    writer_bmp.SetDestFilename("/home/_/c/c/mo/.local/tut_6_1.bmp");
     writer_bmp.WriteDestFile();
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));

@@ -3,6 +3,6 @@
 #include "tuts.h"
 
 int main() {
-    tut_5();
+    tut_6();
     return 0;
 }
