@@ -4,7 +4,7 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 
-bin/mo2d: bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_liveview_liveview.o
+bin/mo2d: bin/mo2d_gui_gui.o bin/mo2d_liveview_liveview.o bin/mo2d_main.o
 	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_liveview_liveview.o -o bin/mo2d
 
 bin/mo_mapgen: bin/mo_mapgen_main.o bin/mo_mapgen_tuts.o bin/mo_mapgen_noiseutils.o
