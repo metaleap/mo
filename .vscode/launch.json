@@ -2,13 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run mo2d",
+            "name": "Run",
             "type": "gdb",
             "request": "launch",
-            "target": "mo2d",
+            "target": "mo_mapgen",
             "cwd": "${fileWorkspaceFolder}/bin",
             "valuesFormatting": "parseText",
-            "preLaunchTask": "build_mo2d"
+            "preLaunchTask": "build_devlocal"
         }
     ]
 }

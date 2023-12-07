@@ -3,7 +3,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "build_mo2d",
+            "label": "build_devlocal",
             "command": "./build_devlocal.sh",
             "options": {
                 "cwd": "/home/_/c/c/mo"

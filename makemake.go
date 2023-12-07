@@ -20,7 +20,8 @@ var (
 	strEnds      = strings.HasSuffix
 	strBegins    = strings.HasPrefix
 	everLibNames = map[string][]string{
-		"mo2d": {"sfml-graphics", "sfml-window", "sfml-system", "GL"},
+		"mo2d":      {"imgui", "imgui-sfml", "sfml-graphics", "sfml-window", "sfml-system", "GL"},
+		"mo_mapgen": {"noise"},
 	}
 )
 
@@ -93,9 +94,6 @@ func main() {
 				buf.WriteByte('\n')
 				buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
 				for _, lib_name := range everLibNames[executable_name] {
-					buf.WriteString(" -l" + lib_name)
-				}
-				for _, lib_name := range lib_dep_names {
 					buf.WriteString(" -l" + lib_name)
 				}
 				for obj_file_path := range obj_file_paths {

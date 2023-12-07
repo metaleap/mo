@@ -27,7 +27,7 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 
-#include "./game/game.h"
+#include "./liveview/liveview.h"
 #include "./gui/gui.h"
 
 
@@ -39,17 +39,13 @@ int main() {
     window.setVerticalSyncEnabled(true);
 
     Gui gui(window);
-    Game game;
+    LiveView live_view;
 
     sf::Clock clock;
     clock.restart();
-    auto time_remaining_sec = Game::timeLimitSec;
 
     while (window.isOpen()) {
         const auto delta = clock.restart();
-        time_remaining_sec = time_remaining_sec - delta.asSeconds();
-        if (time_remaining_sec < 0)
-            time_remaining_sec = Game::timeLimitSec;
 
         // INPUT
         sf::Event evt;
@@ -64,12 +60,12 @@ int main() {
         if (!window.isOpen())
             break;
 
-        game.onUpdate(delta);
+        live_view.onUpdate(delta);
         gui.onUpdate(delta);
 
         // RENDER
         window.clear();
-        game.onRender(window);
+        live_view.onRender(window);
         gui.onRender();
         window.display();
     }
