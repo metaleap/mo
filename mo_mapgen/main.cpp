@@ -1,8 +1,8 @@
 // https://libnoise.sourceforge.net/tutorials
 
-#include "tut2.h"
+#include "tuts.h"
 
 int main() {
-    tut2();
+    tut3();
     return 0;
 }

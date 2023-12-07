@@ -1,5 +1,7 @@
 bin
 libdeps
+.cache
+.local
 *.a
 *.o
 *.so

@@ -41,9 +41,11 @@ func main() {
 			panic(err)
 		}
 		if fsEntry.IsDir() && strBegins(fsPath, "libdeps/") && (!strings.Contains(fsPath, "/examples/")) && !strEnds(strings.TrimRight(fsPath, "/"), "/examples") {
-			if matches, err := filepath.Glob(filepath.Join(fsPath, "*.h")); err != nil {
+			if matches1, err := filepath.Glob(filepath.Join(fsPath, "*.h")); err != nil {
 				panic(err)
-			} else if len(matches) > 0 {
+			} else if matches2, err := filepath.Glob(filepath.Join(fsPath, "**", "*.h")); err != nil {
+				panic(err)
+			} else if (len(matches1) > 0) || (len(matches2) > 0) {
 				lib_dep_dir_paths = append(lib_dep_dir_paths, fsPath)
 			}
 		}
@@ -61,10 +63,10 @@ func main() {
 		if strEnds(source_file_path, ".cpp") {
 			rule := makeRule{inPath: source_file_path, outPath: fsCppPathToObjPath(source_file_path)}
 			src := fsRead(rule.inPath)
-			for again, needle_incl := true, "#include \"."; again; {
+			for again, needle_incl := true, "#include \""; again; {
 				idx_incl := strings.LastIndex(src, needle_incl)
 				if again = (idx_incl >= 0); again {
-					idx_off := idx_incl + len(needle_incl) - len(".")
+					idx_off := idx_incl + len(needle_incl)
 					idx_quot := strings.IndexByte(src[idx_off:], '"')
 					if again, idx_quot = (idx_quot > 0), idx_off+idx_quot; again {
 						h_file_path := filepath.Join(filepath.Dir(rule.inPath), src[idx_off:idx_quot])
@@ -124,7 +126,6 @@ func main() {
 		}
 		buf.WriteString("\n\t$(CXX) -c $(CXXFLAGS)")
 		for _, lib_dep_dir_path := range lib_dep_dir_paths {
-			println(">>" + lib_dep_dir_path + "<<")
 			buf.WriteString(" -I" + lib_dep_dir_path)
 		}
 		buf.WriteString(" " + rule.inPath + " -o " + rule.outPath + "\n")
