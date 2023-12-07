@@ -33,15 +33,19 @@ type makeRule struct {
 
 func main() {
 	executable_names := os.Args[1:]
-	var lib_dep_names []string
+	var lib_dep_dir_paths []string
 	cur_dir_path := fsAbs(".")
 	var all_source_file_paths []string
 	fs.WalkDir(os.DirFS(cur_dir_path), ".", func(fsPath string, fsEntry fs.DirEntry, err error) error {
 		if err != nil {
 			panic(err)
 		}
-		if fsEntry.IsDir() && strBegins(fsPath, "libdeps/") && (1 == strings.Count(fsPath, "/")) {
-			lib_dep_names = append(lib_dep_names, filepath.Base(fsPath))
+		if fsEntry.IsDir() && strBegins(fsPath, "libdeps/") && (!strings.Contains(fsPath, "/examples/")) && !strEnds(strings.TrimRight(fsPath, "/"), "/examples") {
+			if matches, err := filepath.Glob(filepath.Join(fsPath, "*.h")); err != nil {
+				panic(err)
+			} else if len(matches) > 0 {
+				lib_dep_dir_paths = append(lib_dep_dir_paths, fsPath)
+			}
 		}
 		if !strBegins(fsPath, "mo") {
 			return nil
@@ -118,7 +122,12 @@ func main() {
 		for _, dep := range rule.depPaths {
 			buf.WriteString(" " + dep)
 		}
-		buf.WriteString("\n\t$(CXX) -c $(CXXFLAGS) -Ilibdeps/" + strings.Join(lib_dep_names, " -Ilibdeps/") + " " + rule.inPath + " -o " + rule.outPath + "\n")
+		buf.WriteString("\n\t$(CXX) -c $(CXXFLAGS)")
+		for _, lib_dep_dir_path := range lib_dep_dir_paths {
+			println(">>" + lib_dep_dir_path + "<<")
+			buf.WriteString(" -I" + lib_dep_dir_path)
+		}
+		buf.WriteString(" " + rule.inPath + " -o " + rule.outPath + "\n")
 		buf.WriteByte('\n')
 	}
 	fsWrite("makefile", buf.String())

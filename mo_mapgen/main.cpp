@@ -1,8 +1,8 @@
-#include <cstdio>
+// https://libnoise.sourceforge.net/tutorials
 
-// adapted from libdeps/libnoise/examples/complexplanet.cpp
+#include "tut2.h"
 
 int main() {
-    printf("Hola");
+    tut2();
     return 0;
 }
