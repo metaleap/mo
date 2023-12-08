@@ -25,12 +25,6 @@ void Gui::onInput(const sf::Event evt) {
 
 void Gui::onUpdate(const sf::Time delta) {
     ImGui::SFML::Update(window, delta);
-    ImGui::PushFont(font);
-    ImGui::Begin("Hello, world!");
-    if (ImGui::Button("Lookie a BUTT-on"))
-        ImGui::Text("You clicked");
-    ImGui::End();
-    ImGui::PopFont();
 }
 
 void Gui::onRender() {

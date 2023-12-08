@@ -53,12 +53,11 @@ void ShaderView::onRender(sf::RenderWindow &window) {
     res.shader.setUniform("u_resolution", sf::Vector2f((float)size_window.x, (float)size_window.y));
     window.draw(res.rect, &res.shader);
 
+    ImGui::Begin("Shaders");
     for (const auto &shader_file_path : res.shaderFilePaths) {
-        if (ImGui::Begin(shader_file_path.filename().c_str()))
-            if (ImGui::Button(shader_file_path.filename().c_str()))
-                ImGui::Text("You clicked");
-        ImGui::End();
+        ImGui::Button(shader_file_path.filename().c_str());
     }
+    ImGui::End();
 }
 
 bool ShaderView::setupAndLoadResources() {
