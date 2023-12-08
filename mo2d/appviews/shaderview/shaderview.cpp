@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Vector2.hpp>
@@ -31,6 +33,7 @@ struct Shader {
     std::filesystem::path filePath;
     std::filesystem::file_time_type fileModTime;
     std::string src = "";
+    bool didLoadFail = false;
     bool isCurrent = false;
 };
 
@@ -51,12 +54,21 @@ ShaderView::ShaderView() {
             res.shaders.push_back(Shader {.filePath = entry.path(), .fileModTime = entry.last_write_time()});
 }
 
-void ShaderView::onUpdate(sf::Time delta) {
-    ImGui::Begin("Shaders");
+void ShaderView::onUpdate(sf::Time) {
+    ImGui::Begin("Shaders", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     Shader* shader_just_selected = nullptr;
     int shader_current_idx = -1;
 
-    if (ImGui::BeginCombo("Hola", "", ImGuiComboFlags_NoPreview | ImGuiComboFlags_HeightLargest)) {
+    for (int i = 0; auto &shader : res.shaders) {
+        if (shader.isCurrent)
+            shader_current_idx = i;
+        i++;
+    }
+
+    if (ImGui::BeginCombo("##Shaders",
+                          (shader_current_idx < 0) ? "(Select a shader...)"
+                                                   : res.shaders[shader_current_idx].filePath.filename().c_str(),
+                          ImGuiComboFlags_HeightLargest)) {
         for (auto &shader : res.shaders)
             if (ImGui::Selectable(shader.filePath.filename().c_str(), shader.isCurrent))
                 shader_just_selected = &shader;
@@ -71,10 +83,15 @@ void ShaderView::onUpdate(sf::Time delta) {
     }
     if (shader_current_idx >= 0) {
         const auto shader_current = &res.shaders[shader_current_idx];
-        if (ImGui::InputTextMultiline(shader_current->filePath.filename().c_str(), &shader_current->src)) {
-            if (!res.shader.loadFromMemory(shader_current->src, sf::Shader::Fragment))
-                ImGui::Text("Shader load error, check stdout/stderr");
+        if (shader_just_selected != nullptr) {
+            std::ifstream file(shader_current->filePath, std::ios_base::binary | std::ios_base::in);
+            shader_current->src = std::string(std::istreambuf_iterator<char> {file}, std::istreambuf_iterator<char> {});
+            shader_current->didLoadFail = !res.shader.loadFromMemory(shader_current->src, sf::Shader::Fragment);
+        } else {
         }
+        if (ImGui::InputTextMultiline((std::string("##") + shader_current->filePath.filename().string()).c_str(),
+                                      &shader_current->src))
+            shader_current->didLoadFail = !res.shader.loadFromMemory(shader_current->src, sf::Shader::Fragment);
     }
     // if (shader.isCurrent) {
     // }
@@ -91,7 +108,7 @@ void ShaderView::onRender(sf::RenderWindow &window) {
 }
 
 bool ShaderView::setupAndLoadResources() {
-    if (!res.bgTexture.loadFromFile("/home/_/pix/mbuntu-1.jpg"))
+    if (!res.bgTexture.loadFromFile("/home/_/pix/mbuntu-11.jpg"))
         return false;
     res.rect.setTexture(&res.bgTexture);
 

@@ -48,7 +48,7 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "gfxdev");
     window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
-    // window.setVerticalSyncEnabled(true);
+    window.setVerticalSyncEnabled(true);
 
     if (!setupAndLoadResources())
         return 1;
@@ -72,13 +72,14 @@ int main() {
                 window.close();
                 break;
             }
-            for (auto key = sf::Keyboard::Num0; key <= sf::Keyboard::Num9; key = (sf::Keyboard::Key)(1 + (int)key)) {
-                if (sf::Keyboard::isKeyPressed(key)) {
-                    uint num = (int)key - (int)sf::Keyboard::Num0;
-                    if ((num >= 1) && (num <= views.size()))
-                        view_current = views[num - 1];
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
+                for (auto key = sf::Keyboard::Num0; key <= sf::Keyboard::Num9; key = (sf::Keyboard::Key)(1 + (int)key)) {
+                    if (sf::Keyboard::isKeyPressed(key)) {
+                        uint num = (int)key - (int)sf::Keyboard::Num0;
+                        if ((num >= 1) && (num <= views.size()))
+                            view_current = views[num - 1];
+                    }
                 }
-            }
 
             gui.onInput(evt);
         }
