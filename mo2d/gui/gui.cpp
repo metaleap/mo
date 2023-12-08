@@ -1,4 +1,5 @@
 #include <cassert>
+#include <vector>
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -7,8 +8,9 @@
 #include <SFML/Window/Event.hpp>
 
 #include "./gui.h"
+#include "../appviews/appview.h"
 
-Gui::Gui(sf::RenderWindow &win) : window(win) {
+Gui::Gui(sf::RenderWindow &win, std::vector<AppView> views) : window(win) {
     assert(ImGui::SFML::Init(this->window, false));
     ImGuiIO &imgui_io = ImGui::GetIO();
     imgui_io.IniFilename = "/home/_/.config/mo2d_dbg.config";

@@ -6,10 +6,12 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Time.hpp>
 
+#include "../appview.h"
 
-struct LiveView {
+
+struct ShaderView : AppView {
   public:
-    LiveView();
+    ShaderView();
     void onUpdate(sf::Time delta);
     void onRender(sf::RenderWindow &window);
 
