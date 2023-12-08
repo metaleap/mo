@@ -2,16 +2,16 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 build_imgui:
-	$(CXX) $(CXXFLAGS) -fPIC -c libdeps/imgui/*.cpp
-	$(CXX) $(CXXFLAGS) -shared -o bin/libimgui.so *.o
+	$(CXX) $(CXXFLAGS) -fPIC -c -O3 -fno-exceptions -Ilibdeps/imgui libdeps/imgui/*.cpp libdeps/imgui/misc/cpp/*.cpp
+	$(CXX) $(CXXFLAGS) -shared -O3 -fno-exceptions -o bin/libimgui.so *.o
 	rm -f *.o
 
 build_sfml_imgui:
-	$(CXX) $(CXXFLAGS) -fPIC -Ilibdeps/imgui -c libdeps/imgui-sfml/imgui-SFML.cpp
-	$(CXX) $(CXXFLAGS) -shared -o bin/libimgui-sfml.so *.o
+	$(CXX) $(CXXFLAGS) -fPIC -O3 -fno-exceptions -Ilibdeps/imgui -c libdeps/imgui-sfml/imgui-SFML.cpp
+	$(CXX) $(CXXFLAGS) -shared -O3 -fno-exceptions -o bin/libimgui-sfml.so *.o
 	rm -f *.o
 
 build_libnoise:
-	$(CXX) $(CXXFLAGS) -fPIC -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module -c libdeps/libnoise/src/*.cpp libdeps/libnoise/src/model/*.cpp libdeps/libnoise/src/module/*.cpp
-	$(CXX) $(CXXFLAGS) -shared -o bin/libnoise.so *.o
+	$(CXX) $(CXXFLAGS) -fPIC -O3 -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module -c libdeps/libnoise/src/*.cpp libdeps/libnoise/src/model/*.cpp libdeps/libnoise/src/module/*.cpp
+	$(CXX) $(CXXFLAGS) -shared -O3 -o bin/libnoise.so *.o
 	rm -f *.o

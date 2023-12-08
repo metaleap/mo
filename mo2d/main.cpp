@@ -55,13 +55,13 @@ int main() {
 
     LiveView view_live;
     ShaderView view_shaders;
-    AppView* view_current = &view_live;
 
+    AppView* view_current = &view_shaders;
     std::vector<AppView*> views = {&view_live, &view_shaders};
     Gui gui(window, views);
+
     sf::Clock clock;
     clock.restart();
-
     while (window.isOpen()) {
         const auto delta = clock.restart();
 
@@ -88,8 +88,8 @@ int main() {
         const auto delta_msec = delta.asMilliseconds();
         res.fpsTextTopLeft.setString(
             sf::String("fps: " + std::to_string((delta_msec == 0) ? (0) : (1000 / delta.asMilliseconds()))));
-        view_current->onUpdate(delta);
         gui.onUpdate(delta);
+        view_current->onUpdate(delta);
 
         // RENDER
         window.clear();
