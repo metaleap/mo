@@ -5,7 +5,7 @@
             "name": "Run",
             "type": "gdb",
             "request": "launch",
-            "target": "mo_mapgen",
+            "target": "mo2d",
             "cwd": "${fileWorkspaceFolder}/bin",
             "valuesFormatting": "parseText",
             "preLaunchTask": "build_devlocal"

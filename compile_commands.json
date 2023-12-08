@@ -1,12 +1,54 @@
 [
-    {
-        "directory": "/home/_/c/c/mo",
-        "file": "mo2d/main.cpp",
-        "arguments": [ "clang++", "-std=c++20", "-c", "-g", "-Ilibdeps/imgui", "-Ilibdeps/imgui-sfml", "-Ilibdeps/libnoise/include", "-Ilibdeps/libnoise/include/noise", "-Ilibdeps/libnoise/include/noise/model", "-Ilibdeps/libnoise/include/noise/module", "mo2d/main.cpp", "-o", "/dev/null/mo2d", "-O0" ]
-    },
-    {
-        "directory": "/home/_/c/c/mo",
-        "file": "mo_mapgen/main.cpp",
-        "arguments": [ "clang++", "-std=c++20", "-c", "-g", "-Ilibdeps/imgui", "-Ilibdeps/imgui-sfml", "-Ilibdeps/libnoise/include", "-Ilibdeps/libnoise/include/noise", "-Ilibdeps/libnoise/include/noise/model", "-Ilibdeps/libnoise/include/noise/module", "mo_mapgen/main.cpp", "-o", "/dev/null/mo_mapgen", "-O0" ]
-    }
+  {
+    "directory": "/home/_/c/c/mo",
+    "file": "mo2d/main.cpp",
+    "arguments": [
+      "clang++",
+      "-Ilibdeps/imgui",
+      "-Ilibdeps/imgui/backends",
+      "-Ilibdeps/imgui/misc",
+      "-Ilibdeps/imgui/misc/cpp",
+      "-Ilibdeps/imgui/misc/freetype",
+      "-Ilibdeps/imgui/misc/single_file",
+      "-Ilibdeps/imgui-sfml",
+      "-Ilibdeps/libnoise",
+      "-Ilibdeps/libnoise/include",
+      "-Ilibdeps/libnoise/include/noise",
+      "-Ilibdeps/libnoise/include/noise/model",
+      "-Ilibdeps/libnoise/include/noise/module",
+      "-std=c++20",
+      "-c",
+      "-g",
+      "-O0",
+      "mo2d/main.cpp",
+      "-o",
+      "/dev/null/dummy"
+    ]
+  },
+  {
+    "directory": "/home/_/c/c/mo",
+    "file": "mo_noiselib_tuts/main.cpp",
+    "arguments": [
+      "clang++",
+      "-Ilibdeps/imgui",
+      "-Ilibdeps/imgui/backends",
+      "-Ilibdeps/imgui/misc",
+      "-Ilibdeps/imgui/misc/cpp",
+      "-Ilibdeps/imgui/misc/freetype",
+      "-Ilibdeps/imgui/misc/single_file",
+      "-Ilibdeps/imgui-sfml",
+      "-Ilibdeps/libnoise",
+      "-Ilibdeps/libnoise/include",
+      "-Ilibdeps/libnoise/include/noise",
+      "-Ilibdeps/libnoise/include/noise/model",
+      "-Ilibdeps/libnoise/include/noise/module",
+      "-std=c++20",
+      "-c",
+      "-g",
+      "-O0",
+      "mo_noiselib_tuts/main.cpp",
+      "-o",
+      "/dev/null/dummy"
+    ]
+  }
 ]
