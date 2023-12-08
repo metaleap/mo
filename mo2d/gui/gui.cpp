@@ -15,7 +15,6 @@ Gui::Gui(sf::RenderWindow &win, std::vector<AppView*> views) : window(win), view
     ImGuiIO &imgui_io = ImGui::GetIO();
     imgui_io.IniFilename = "/home/_/.config/mo2d_dbg.config";
     imgui_io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    this->font = imgui_io.Fonts->AddFontDefault();
     this->font = imgui_io.Fonts->AddFontFromFileTTF("/home/_/f/Yanone Kaffeesatz/YanoneKaffeesatz-Regular.otf", 44);
     assert(ImGui::SFML::UpdateFontTexture());
 }

@@ -40,6 +40,7 @@ struct {
 } res;
 
 
+bool setupAndLoadResources();
 int main() {
     std::srand((int)(std::time(nullptr)));
     if (!sf::Shader::isAvailable())
@@ -49,8 +50,8 @@ int main() {
     window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
     // window.setVerticalSyncEnabled(true);
 
-    void setupAndLoadResources();
-    setupAndLoadResources();
+    if (!setupAndLoadResources())
+        return 1;
 
     LiveView view_live;
     ShaderView view_shaders;
@@ -99,11 +100,13 @@ int main() {
     }
 
     gui.onShutDown();
+    fflush(stdout);
     return 0;
 }
 
-void setupAndLoadResources() {
-    res.fpsTextFont.loadFromFile("/home/_/heap/gd/kga-1.8.0/Other/Fonts/Kenney Future.ttf");
+bool setupAndLoadResources() {
+    if (!res.fpsTextFont.loadFromFile("/home/_/heap/gd/kga-1.8.0/Other/Fonts/Kenney Future.ttf"))
+        return false;
     res.fpsTextTopLeft.setFont(res.fpsTextFont);
     res.fpsTextTopLeft.setCharacterSize(22);
     res.fpsTextTopLeft.setFillColor(sf::Color::White);
@@ -112,4 +115,5 @@ void setupAndLoadResources() {
     const auto text_rect = res.fpsTextTopLeft.getLocalBounds();
     res.fpsTextTopLeft.setOrigin(text_rect.left + (text_rect.width * 0.5f), text_rect.top + (text_rect.height * 0.5f));
     res.fpsTextTopLeft.setPosition(22, 11);
+    return true;
 }

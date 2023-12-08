@@ -10,7 +10,7 @@
 
 struct {
     sf::Texture bgTexture;
-    sf::Sprite bgSprite;
+    sf::RectangleShape rect;
 } res;
 
 
@@ -18,18 +18,18 @@ LiveView::LiveView() {
     this->setupAndLoadResources();
 }
 
-LiveView::~LiveView() {
-}
-
 void LiveView::onUpdate(sf::Time) {
 }
 
 void LiveView::onRender(sf::RenderWindow &window) {
-    window.draw(res.bgSprite);
+    const auto size_tex = res.bgTexture.getSize();
+    res.rect.setTextureRect({0, 0, (int)size_tex.x, (int)size_tex.y});
+    const auto size_window = window.getSize();
+    res.rect.setSize({(float)size_window.x, (float)size_window.y});
+    window.draw(res.rect);
 }
 
 void LiveView::setupAndLoadResources() {
-    res.bgTexture.loadFromFile("/home/_/pix/mbuntu-2.jpg");
-    res.bgSprite.setTexture(res.bgTexture);
-    res.bgSprite.setPosition(0, 0);
+    res.bgTexture.loadFromFile("/home/_/pix/mbuntu-0.jpg");
+    res.rect.setTexture(&res.bgTexture);
 }

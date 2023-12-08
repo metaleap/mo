@@ -4,7 +4,7 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 
-bin/mo2d.exec: bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o
+bin/mo2d.exec: bin/mo2d_appviews_liveview_liveview.o bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_appviews_shaderview_shaderview.o
 	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o -o bin/mo2d.exec
 
 bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o
@@ -14,7 +14,7 @@ bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts
 clean:
 	rm -f bin/*.o
 	rm -f bin/*.exec
-# NOTE on clean: all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps.
+# NOTE on clean: bin isn't to be emptied, all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps, and they're rebuilt not with this generated makefile but the manually-written sibline one.
 
 bin/mo_mo.o: mo/mo.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo/mo.cpp -o bin/mo_mo.o

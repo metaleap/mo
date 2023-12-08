@@ -130,7 +130,7 @@ func main() {
 clean:
 	rm -f bin/*.o
 	rm -f bin/*.exec
-# NOTE on clean: all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps.
+# NOTE on clean: bin isn't to be emptied, all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps, and they're rebuilt not with this generated makefile but the manually-written sibline one.
 `)
 		buf.WriteByte('\n')
 	}

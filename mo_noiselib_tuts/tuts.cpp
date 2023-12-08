@@ -51,7 +51,7 @@ void tut_3_4() {
 
     utils::WriterBMP writer_bmp;
     writer_bmp.SetSourceImage(image);
-    writer_bmp.SetDestFilename("/home/_/c/c/mo/.local/tut_3_4.bmp");
+    writer_bmp.SetDestFilename("../.local/tut_3_4.bmp");
     writer_bmp.WriteDestFile();
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
@@ -104,7 +104,7 @@ void tut_5() {
 
     utils::WriterBMP writer_bmp;
     writer_bmp.SetSourceImage(image);
-    writer_bmp.SetDestFilename("/home/_/c/c/mo/.local/tut_5_4.bmp");
+    writer_bmp.SetDestFilename("../.local/tut_5_4.bmp");
     writer_bmp.WriteDestFile();
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
@@ -161,7 +161,7 @@ void tut_6() {
 
     utils::WriterBMP writer_bmp;
     writer_bmp.SetSourceImage(image);
-    writer_bmp.SetDestFilename("/home/_/c/c/mo/.local/tut_6.bmp");
+    writer_bmp.SetDestFilename("../.local/tut_6.bmp");
     writer_bmp.WriteDestFile();
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
@@ -199,7 +199,7 @@ void tut_8() {
 
     utils::WriterBMP writer;
     writer.SetSourceImage(image);
-    writer.SetDestFilename("/home/_/c/c/mo/.local/tut_8.bmp");
+    writer.SetDestFilename("../.local/tut_8.bmp");
     writer.WriteDestFile();
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
