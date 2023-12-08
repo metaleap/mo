@@ -54,10 +54,9 @@ int main() {
 
     LiveView view_live;
     ShaderView view_shaders;
+    AppView* view_current = &view_live;
 
-    std::vector<AppView> views;
-    views.push_back(view_live);
-    views.push_back(view_shaders);
+    std::vector<AppView*> views = {&view_live, &view_shaders};
     Gui gui(window, views);
     sf::Clock clock;
     clock.restart();
@@ -68,12 +67,19 @@ int main() {
         // INPUT
         sf::Event evt;
         while (window.pollEvent(evt)) {
-            gui.onInput(evt);
-
             if ((evt.type == sf::Event::Closed) || sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
                 window.close();
                 break;
             }
+            for (auto key = sf::Keyboard::Num0; key <= sf::Keyboard::Num9; key = (sf::Keyboard::Key)(1 + (int)key)) {
+                if (sf::Keyboard::isKeyPressed(key)) {
+                    uint num = (int)key - (int)sf::Keyboard::Num0;
+                    if ((num >= 1) && (num <= views.size()))
+                        view_current = views[num - 1];
+                }
+            }
+
+            gui.onInput(evt);
         }
         if (!window.isOpen())
             break;
@@ -81,12 +87,12 @@ int main() {
         const auto delta_msec = delta.asMilliseconds();
         res.fpsTextTopLeft.setString(
             sf::String("fps: " + std::to_string((delta_msec == 0) ? (0) : (1000 / delta.asMilliseconds()))));
-        view_live.onUpdate(delta);
+        view_current->onUpdate(delta);
         gui.onUpdate(delta);
 
         // RENDER
         window.clear();
-        view_live.onRender(window);
+        view_current->onRender(window);
         window.draw(res.fpsTextTopLeft);
         gui.onRender();
         window.display();

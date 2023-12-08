@@ -5,10 +5,10 @@
             "name": "Run",
             "type": "gdb",
             "request": "launch",
-            "target": "mo2d",
+            "target": "mo2d.exec",
             "cwd": "${fileWorkspaceFolder}/bin",
             "valuesFormatting": "parseText",
-            "preLaunchTask": "build_devlocal"
+            "preLaunchTask": "make_devlocal"
         }
     ]
 }

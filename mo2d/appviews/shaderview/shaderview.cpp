@@ -18,6 +18,8 @@ ShaderView::ShaderView() {
     this->setupAndLoadResources();
 }
 
+ShaderView::~ShaderView() {
+}
 
 void ShaderView::onUpdate(sf::Time) {
 }

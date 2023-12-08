@@ -10,11 +10,11 @@
 
 
 struct LiveView : AppView {
-  public:
+    ~LiveView();
     LiveView();
-    void onUpdate(sf::Time delta);
-    void onRender(sf::RenderWindow &window);
 
-  private:
+    void onUpdate(sf::Time delta) override;
+    void onRender(sf::RenderWindow &window) override;
+
     void setupAndLoadResources();
 };

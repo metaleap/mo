@@ -8,11 +8,11 @@
 #include "../appviews/appview.h"
 
 struct Gui {
-  public:
     sf::RenderWindow &window;
+    std::vector<AppView*> views;
     ImFont* font = nullptr;
 
-    Gui(sf::RenderWindow &win, std::vector<AppView> views);
+    Gui(sf::RenderWindow &win, std::vector<AppView*> views);
     void onInput(const sf::Event evt);
     void onUpdate(const sf::Time delta);
     void onRender();

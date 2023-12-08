@@ -4,9 +4,9 @@
 #include <SFML/System/Time.hpp>
 
 struct AppView {
-    virtual ~AppView();
+    virtual ~AppView() {
+    }
 
-  public:
-    virtual void onUpdate(sf::Time delta);
-    virtual void onRender(sf::RenderWindow &window);
+    virtual void onUpdate(sf::Time delta) = 0;
+    virtual void onRender(sf::RenderWindow &window) = 0;
 };

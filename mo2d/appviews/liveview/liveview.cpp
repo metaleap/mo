@@ -18,6 +18,8 @@ LiveView::LiveView() {
     this->setupAndLoadResources();
 }
 
+LiveView::~LiveView() {
+}
 
 void LiveView::onUpdate(sf::Time) {
 }

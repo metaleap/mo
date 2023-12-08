@@ -65,7 +65,6 @@ func main() {
 				File: fsPath,
 				Args: []string{"clang++", "-std=c++20", "-c", "-g", "-O0", fsPath, "-o", "/dev/null/dummy"},
 			})
-			println(">>" + fsPath + "<<")
 		}
 		if (!fsEntry.IsDir()) && (strEnds(fsPath, ".cpp") || strEnds(fsPath, ".h")) {
 			all_source_file_paths = append(all_source_file_paths, fsPath)
@@ -107,7 +106,7 @@ func main() {
 				obj_file_paths, is_first := map[string]bool{}, true
 				gatherObjFileNamesFor(rules, obj_file_paths, rule.outPath)
 
-				buf.WriteString("bin/" + executable_name)
+				buf.WriteString("bin/" + executable_name + ".exec")
 				for obj_file_path := range obj_file_paths {
 					buf.WriteString(iIf(is_first, ": ", " ") + obj_file_path)
 					is_first = false
@@ -120,18 +119,19 @@ func main() {
 				for obj_file_path := range obj_file_paths {
 					buf.WriteString(" " + obj_file_path)
 				}
-				buf.WriteString(" -o bin/" + executable_name + "\n")
+				buf.WriteString(" -o bin/" + executable_name + ".exec\n")
 				buf.WriteByte('\n')
 				break
 			}
 		}
 	}
 	{
-		buf.WriteString("clean:\n\trm -f bin/*.o\n")
-		for _, executable_name := range executable_names {
-			buf.WriteString("\trm -f bin/" + executable_name + "\n")
-		}
-		buf.WriteString("# NOTE on clean: all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps.\n\n")
+		buf.WriteString(`
+clean:
+	rm -f bin/*.o
+	rm -f bin/*.exec
+# NOTE on clean: all bin/*.so files _stay_! they're rarely or never updated 3rd-party deps.
+`)
 		buf.WriteByte('\n')
 	}
 	for _, rule := range rules {

@@ -10,7 +10,7 @@
 #include "./gui.h"
 #include "../appviews/appview.h"
 
-Gui::Gui(sf::RenderWindow &win, std::vector<AppView> views) : window(win) {
+Gui::Gui(sf::RenderWindow &win, std::vector<AppView*> views) : window(win), views(views) {
     assert(ImGui::SFML::Init(this->window, false));
     ImGuiIO &imgui_io = ImGui::GetIO();
     imgui_io.IniFilename = "/home/_/.config/mo2d_dbg.config";
