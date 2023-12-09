@@ -3,9 +3,9 @@
 #include <vector>
 
 #include <imgui.h>
-#include <SFML/Graphics.hpp>
 
 #include "../appviews/appview.h"
+
 
 struct Gui {
     sf::RenderWindow &window;

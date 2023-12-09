@@ -1,14 +1,13 @@
 #include <cassert>
 #include <vector>
 
-#include "imgui.h"
-#include "imgui-SFML.h"
+#include <imgui.h>
+#include <imgui-SFML.h>
 
-#include <SFML/Graphics.hpp>
 #include <SFML/Window/Event.hpp>
 
 #include "./gui.h"
-#include "../appviews/appview.h"
+
 
 Gui::Gui(sf::RenderWindow &win, std::vector<AppView*> views) : window(win), views(views) {
     assert(ImGui::SFML::Init(this->window, false));
