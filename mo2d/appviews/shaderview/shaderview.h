@@ -14,11 +14,11 @@
 
 struct Shader {
     std::filesystem::path filePath;
-    std::filesystem::file_time_type fileModTime;
     std::string src = "";
     bool didLoadFail = false;
     bool isCurrent = false;
     bool didUserModifyLive = false;
+    std::time_t timeLastReloadedFromFs = 0;
 };
 
 
@@ -29,10 +29,9 @@ struct ShaderView : AppView {
     void onRender(sf::RenderWindow &window);
 
     bool setupAndLoadResources();
-    void maybeReloadCurrentShader(Shader* curShader);
+    void maybeReloadCurrentShader(Shader* curShader, bool force);
 
     std::time_t timeStarted = std::time(nullptr);
-    std::time_t timeLastCheckedForChanges = 0;
     sf::Texture bgTexture;
     sf::RectangleShape rect;
     sf::Shader shader;
