@@ -18,6 +18,7 @@ struct Shader {
     std::string src = "";
     bool didLoadFail = false;
     bool isCurrent = false;
+    bool didUserModifyLive = false;
 };
 
 
@@ -28,8 +29,10 @@ struct ShaderView : AppView {
     void onRender(sf::RenderWindow &window);
 
     bool setupAndLoadResources();
+    void maybeReloadCurrentShader(Shader* curShader);
 
     std::time_t timeStarted = std::time(nullptr);
+    std::time_t timeLastCheckedForChanges = 0;
     sf::Texture bgTexture;
     sf::RectangleShape rect;
     sf::Shader shader;

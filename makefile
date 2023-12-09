@@ -4,10 +4,10 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 
-bin/mo2d.exec: bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_main.o bin/mo2d_gui_gui.o
-	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_gui_gui.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o -o bin/mo2d.exec
+bin/mo2d.exec: bin/mo2d_appviews_liveview_liveview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_shaderview_shaderview.o
+	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_gui_gui.o -o bin/mo2d.exec
 
-bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o
+bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_main.o
 	$(CXX) $(CXXFLAGS) -Lbin -lnoise bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o -o bin/mo_noiselib_tuts.exec
 
 
@@ -25,10 +25,10 @@ bin/mo2d_appviews_liveview_liveview.o: mo2d/appviews/liveview/liveview.cpp mo2d/
 bin/mo2d_appviews_shaderview_shaderview.o: mo2d/appviews/shaderview/shaderview.cpp mo2d/appviews/shaderview/shaderview.h mo2d/appviews/shaderview/shaderview.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/appviews/shaderview/shaderview.cpp -o bin/mo2d_appviews_shaderview_shaderview.o
 
-bin/mo2d_gui_gui.o: mo2d/gui/gui.cpp mo2d/appviews/appview.h mo2d/gui/gui.h mo2d/gui/gui.cpp
+bin/mo2d_gui_gui.o: mo2d/gui/gui.cpp mo2d/gui/gui.h mo2d/gui/gui.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/gui/gui.cpp -o bin/mo2d_gui_gui.o
 
-bin/mo2d_main.o: mo2d/main.cpp mo2d/appviews/appview.h mo2d/gui/gui.h mo2d/gui/gui.cpp mo2d/appviews/shaderview/shaderview.h mo2d/appviews/shaderview/shaderview.cpp mo2d/appviews/liveview/liveview.h mo2d/appviews/liveview/liveview.cpp
+bin/mo2d_main.o: mo2d/main.cpp mo2d/appviews/shaderview/shaderview.h mo2d/appviews/shaderview/shaderview.cpp mo2d/appviews/liveview/liveview.h mo2d/appviews/liveview/liveview.cpp mo2d/gui/gui.h mo2d/gui/gui.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/main.cpp -o bin/mo2d_main.o
 
 bin/mo_noiselib_tuts_main.o: mo_noiselib_tuts/main.cpp mo_noiselib_tuts/tuts.h mo_noiselib_tuts/tuts.cpp

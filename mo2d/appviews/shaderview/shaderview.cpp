@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <fstream>
 
 #include "./shaderview.h"
@@ -51,15 +52,19 @@ void ShaderView::onUpdate(sf::Time) {
     }
     if (shader_current_idx >= 0) {
         const auto shader_current = &this->shaders[shader_current_idx];
-        if (shader_just_selected != nullptr) {
-            std::ifstream file(shader_current->filePath, std::ios_base::binary | std::ios_base::in);
-            shader_current->src = std::string(std::istreambuf_iterator<char> {file}, std::istreambuf_iterator<char> {});
-            shader_current->didLoadFail = !this->shader.loadFromMemory(shader_current->src, sf::Shader::Fragment);
-        } else {
+        if (shader_just_selected != nullptr)
+            this->maybeReloadCurrentShader(shader_current);
+        else {
+            if (ImGui::InputTextMultiline((std::string("##") + shader_current->filePath.filename().string()).c_str(),
+                                          &shader_current->src)) {
+                shader_current->didUserModifyLive = true;
+                shader_current->didLoadFail = !this->shader.loadFromMemory(shader_current->src, sf::Shader::Fragment);
+            } else if (!shader_current->didUserModifyLive) {
+                const auto cur_sec = time(nullptr);
+                if (((cur_sec % 3) == 0) && (cur_sec != this->timeLastCheckedForChanges))
+                    maybeReloadCurrentShader(shader_current);
+            }
         }
-        if (ImGui::InputTextMultiline((std::string("##") + shader_current->filePath.filename().string()).c_str(),
-                                      &shader_current->src))
-            shader_current->didLoadFail = !this->shader.loadFromMemory(shader_current->src, sf::Shader::Fragment);
     }
     // if (shader.isCurrent) {
     // }
@@ -73,6 +78,17 @@ void ShaderView::onRender(sf::RenderWindow &window) {
     this->rect.setSize({(float)size_window.x, (float)size_window.y});
     this->shader.setUniform("u_resolution", sf::Vector2f((float)size_window.x, (float)size_window.y));
     window.draw(this->rect, &this->shader);
+}
+
+void ShaderView::maybeReloadCurrentShader(Shader* curShader) {
+    std::ifstream file(curShader->filePath, std::ios_base::binary | std::ios_base::in);
+    const auto src_new = std::string(std::istreambuf_iterator<char> {file}, std::istreambuf_iterator<char> {});
+    if (src_new != curShader->src) {
+        curShader->src = src_new;
+        curShader->didLoadFail = !this->shader.loadFromMemory(curShader->src, sf::Shader::Fragment);
+        curShader->didUserModifyLive = false;
+        this->timeLastCheckedForChanges = time(nullptr);
+    }
 }
 
 bool ShaderView::setupAndLoadResources() {

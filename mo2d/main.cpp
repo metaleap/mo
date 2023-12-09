@@ -42,7 +42,8 @@ int main() {
         // INPUT
         sf::Event evt;
         while (window.pollEvent(evt)) {
-            if ((evt.type == sf::Event::Closed) || sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+            if ((evt.type == sf::Event::Closed)
+                || (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))) {
                 window.close();
                 break;
             }
