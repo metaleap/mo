@@ -12,6 +12,8 @@ ShaderView::ShaderView() {
         if ((entry.path().extension() == ".frag")
             && (entry.path().filename() != "builtin_cheatsheet_preview_dont_rename.frag"))
             this->shaders.push_back(Shader {.filePath = entry.path()});
+
+    this->ensureGlslBuiltinsCheatsheetImageFiles();
 }
 
 void ShaderView::onUpdate(sf::Time) {

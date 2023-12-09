@@ -33,7 +33,6 @@ int main() {
     AppView* view_current = &view_shaders;
     std::vector<AppView*> views = {&view_live, &view_shaders};
     Gui gui(window, views);
-    view_shaders.ensureGlslBuiltinsCheatsheetImageFiles();
 
     sf::Clock clock;
     clock.restart();
