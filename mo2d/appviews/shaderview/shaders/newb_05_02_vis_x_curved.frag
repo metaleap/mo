@@ -1,5 +1,7 @@
 #version 330
 
+#define PI 3.14159265359
+
 uniform vec2 u_resolution;
 
 float plot(vec2 st, float pct) {
@@ -9,7 +11,7 @@ float plot(vec2 st, float pct) {
 
 void main() {
   vec2 st = gl_FragCoord.xy / u_resolution;
-  float y = pow(st.x, 5.0);
+  float y = pow(st.x, PI);
   vec3 col = vec3(y);
   float pct = plot(st, y);
   col = ((1.0 - pct) * col) + (pct * vec3(0.0, 1.0, 0.0));

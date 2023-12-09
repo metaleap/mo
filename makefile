@@ -5,10 +5,10 @@ CXXFLAGS = --debug -std=c++20 -march=native
 
 
 bin/mo2d.exec: bin/mo2d_main.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_gui_gui.o
-	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_main.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_gui_gui.o -o bin/mo2d.exec
+	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_gui_gui.o bin/mo2d_main.o -o bin/mo2d.exec
 
 bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o
-	$(CXX) $(CXXFLAGS) -Lbin -lnoise bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_noiseutils.o -o bin/mo_noiselib_tuts.exec
+	$(CXX) $(CXXFLAGS) -Lbin -lnoise bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_tuts.o -o bin/mo_noiselib_tuts.exec
 
 
 clean:
