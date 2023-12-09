@@ -30,6 +30,8 @@ struct ShaderView : AppView {
 
     bool setupAndLoadResources();
     void maybeReloadCurrentShader(Shader* curShader, bool force);
+    void guiShaders();
+    void guiCheatSheets();
 
     std::time_t timeStarted = std::time(nullptr);
     sf::Texture bgTexture;
