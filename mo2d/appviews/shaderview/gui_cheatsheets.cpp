@@ -24,12 +24,22 @@ std::string shaderSrcGlslBuiltinCheatsheetDefault = "";
 
 void ShaderView::guiCheatSheets() {
     if (ImGui::Begin("Cheat Sheets")) {
-        for (const auto &glsl_builtin_name : glslBuiltinNames) {
-            if (ImGui::TreeNode(glsl_builtin_name.c_str())) {
-                const auto &tex = glslBuiltinTextures[glsl_builtin_name];
-                ImGui::Image((void*)(uint64_t)(tex.getNativeHandle()), {512, 512});
-                ImGui::TreePop();
+        if (ImGui::TreeNode("GLSL funcs")) {
+            bool did_expand_all = ImGui::Button("Expand all");
+            bool did_collapse_all = ImGui::Button("Collapse all");
+            for (const auto &glsl_builtin_name : glslBuiltinNames) {
+                if (did_expand_all)
+                    ImGui::SetNextItemOpen(true);
+                else if (did_collapse_all)
+                    ImGui::SetNextItemOpen(false);
+                if (ImGui::TreeNode(glsl_builtin_name.c_str())) {
+                    const auto &tex = glslBuiltinTextures[glsl_builtin_name];
+                    ImGui::Image((void*)(uint64_t)(tex.getNativeHandle()), {512, 512});
+                    ImGui::TreePop();
+                } else
+                    did_expand_all = false;
             }
+            ImGui::TreePop();
         }
     };
     ImGui::End();

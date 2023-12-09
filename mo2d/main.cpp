@@ -20,8 +20,8 @@ int main() {
     if (!sf::Shader::isAvailable())
         return 1;
 
-    sf::RenderWindow window(sf::VideoMode(1080, 1080), "gfxdev");
-    window.setPosition(sf::Vector2i(1080 / 2, 1080 / 2));
+    sf::RenderWindow window(sf::VideoMode(1920, 1080), "gfxdev");
+    window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
     window.setVerticalSyncEnabled(true);
 
     if (!setupAndLoadResources())
