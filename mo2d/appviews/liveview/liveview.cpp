@@ -26,6 +26,6 @@ void LiveView::onRender(sf::RenderWindow &window) {
 }
 
 void LiveView::setupAndLoadResources() {
-    res.bgTexture.loadFromFile("/home/_/pix/mbuntu-0.jpg");
+    res.bgTexture.loadFromFile("/home/_/heap/gd/ease_cheatsheet.png");
     res.rect.setTexture(&res.bgTexture);
 }

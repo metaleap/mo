@@ -97,7 +97,7 @@ void ShaderView::maybeReloadCurrentShader(Shader* curShader, bool force) {
 }
 
 bool ShaderView::setupAndLoadResources() {
-    if (!this->bgTexture.loadFromFile("/home/_/pix/mbuntu-11.jpg"))
+    if (!this->bgTexture.loadFromFile("/home/_/heap/gd/kynds_curves.png"))
         return false;
     this->rect.setTexture(&this->bgTexture);
 
