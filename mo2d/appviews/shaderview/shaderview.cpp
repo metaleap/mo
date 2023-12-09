@@ -9,12 +9,14 @@ ShaderView::ShaderView() {
 
     this->shaders.push_back(Shader {.src = shaderSrcScratchpadDefault, .isCurrent = true});
     for (const auto &entry : std::filesystem::directory_iterator("../mo2d/appviews/shaderview/shaders"))
-        if (entry.path().extension() == ".frag")
+        if ((entry.path().extension() == ".frag")
+            && (entry.path().filename() != "builtin_cheatsheet_preview_dont_rename.frag"))
             this->shaders.push_back(Shader {.filePath = entry.path()});
 }
 
 void ShaderView::onUpdate(sf::Time) {
     this->guiShaders();
+    this->guiCheatSheets();
 }
 
 void ShaderView::onRender(sf::RenderWindow &window) {
@@ -26,14 +28,15 @@ void ShaderView::onRender(sf::RenderWindow &window) {
     window.draw(this->rect, &this->shader);
 }
 
-void ShaderView::maybeReloadCurrentShader(Shader* curShader, bool force) {
+void ShaderView::maybeReloadCurrentShader(Shader* curShader, bool force, bool load) {
     curShader->didUserModifyLive = false;
     std::ifstream file(curShader->filePath, std::ios_base::binary | std::ios_base::in);
-    const auto src_new = std::string(std::istreambuf_iterator<char> {file}, std::istreambuf_iterator<char> {});
+    std::string src_new = std::string(std::istreambuf_iterator<char> {file}, std::istreambuf_iterator<char> {});
     if (force || (src_new != curShader->src)) {
         curShader->timeLastReloadedFromFs = time(nullptr);
         curShader->src = src_new;
-        curShader->didLoadFail = !this->shader.loadFromMemory(curShader->src, sf::Shader::Fragment);
+        if (load)
+            curShader->didLoadFail = !this->shader.loadFromMemory(curShader->src, sf::Shader::Fragment);
     }
 }
 

@@ -30,13 +30,15 @@ struct Shader {
 
 
 struct ShaderView : AppView {
+    void ensureGlslBuiltinsCheatsheetImageFiles();
+
     ShaderView();
 
     void onUpdate(sf::Time delta);
     void onRender(sf::RenderWindow &window);
 
     bool setupAndLoadResources();
-    void maybeReloadCurrentShader(Shader* curShader, bool force);
+    void maybeReloadCurrentShader(Shader* curShader, bool force, bool load = true);
     void guiShaders();
     void guiCheatSheets();
 
