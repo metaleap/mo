@@ -1,10 +1,13 @@
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/Rect.hpp>
-#include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/Image.hpp>
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <filesystem>
 
+#include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/Graphics/Shader.hpp>
 
@@ -15,12 +18,20 @@
 
 const auto glslBuiltinNames = std::vector<std::string> {"none", "abs", "acos", "cos", "sin"};
 
+std::map<std::string, sf::Texture> glslBuiltinTextures {};
 std::string shaderSrcGlslBuiltinCheatsheetDefault = "";
 
 
 void ShaderView::guiCheatSheets() {
-    ImGui::Begin("Cheat Sheets");
-
+    if (ImGui::Begin("Cheat Sheets")) {
+        for (const auto &glsl_builtin_name : glslBuiltinNames) {
+            if (ImGui::TreeNode(glsl_builtin_name.c_str())) {
+                const auto &tex = glslBuiltinTextures[glsl_builtin_name];
+                ImGui::Image((void*)(uint64_t)(tex.getNativeHandle()), {512, 512});
+                ImGui::TreePop();
+            }
+        }
+    };
     ImGui::End();
 }
 
@@ -56,5 +67,9 @@ void ShaderView::ensureGlslBuiltinsCheatsheetImageFiles() {
             if (!img.saveToFile(out_file_path))
                 abort();
         }
+        sf::Texture tex;
+        if (!tex.loadFromFile(out_file_path))
+            abort();
+        glslBuiltinTextures[glsl_builtin_name] = tex;
     }
 }
