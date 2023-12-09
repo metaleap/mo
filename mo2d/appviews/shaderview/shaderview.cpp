@@ -3,17 +3,11 @@
 #include "./shaderview.h"
 
 
-const auto shader_default = "uniform vec2 u_resolution;"
-                            "void main() {"
-                            "	vec2 st = gl_FragCoord.xy/u_resolution;"
-                            "	gl_FragColor = vec4(st.x,st.y,0.0,1.0);"
-                            "}";
-
-
 ShaderView::ShaderView() {
     if (!this->setupAndLoadResources())
         std::exit(1);
 
+    this->shaders.push_back(Shader {.src = shaderSrcScratchpadDefault, .isCurrent = true});
     for (const auto &entry : std::filesystem::directory_iterator("../mo2d/appviews/shaderview/shaders"))
         if (entry.path().extension() == ".frag")
             this->shaders.push_back(Shader {.filePath = entry.path()});
@@ -48,5 +42,5 @@ bool ShaderView::setupAndLoadResources() {
         return false;
     this->rect.setTexture(&this->bgTexture);
 
-    return this->shader.loadFromMemory(shader_default, sf::Shader::Fragment);
+    return this->shader.loadFromMemory(shaderSrcScratchpadDefault, sf::Shader::Fragment);
 }

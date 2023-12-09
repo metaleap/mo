@@ -12,8 +12,15 @@
 #include "../appview.h"
 
 
+const auto shaderSrcScratchpadDefault = "uniform vec2 u_resolution;"
+                                        "\nvoid main() {"
+                                        "\n  vec2 st = gl_FragCoord.xy/u_resolution;"
+                                        "\n  gl_FragColor = vec4(st.x,st.y,0.0,1.0);"
+                                        "\n}";
+
+
 struct Shader {
-    std::filesystem::path filePath;
+    std::filesystem::path filePath = "";
     std::string src = "";
     bool didLoadFail = false;
     bool isCurrent = false;
