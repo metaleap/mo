@@ -47,14 +47,14 @@ int main() {
                 window.close();
                 break;
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
-                for (auto key = sf::Keyboard::Num0; key <= sf::Keyboard::Num9; key = (sf::Keyboard::Key)(1 + (int)key)) {
-                    if (sf::Keyboard::isKeyPressed(key)) {
-                        uint num = (int)key - (int)sf::Keyboard::Num0;
-                        if ((num >= 1) && (num <= views.size()))
-                            view_current = views[num - 1];
-                    }
+            for (auto key = sf::Keyboard::F1; key <= sf::Keyboard::F12; key = (sf::Keyboard::Key)(1 + (int)key)) {
+                if (sf::Keyboard::isKeyPressed(key)) {
+                    uint idx = (int)key - (int)sf::Keyboard::F1;
+                    if ((idx >= 0) && (idx < views.size()))
+                        view_current = views[idx];
+                    break;
                 }
+            }
 
             gui.onInput(evt);
         }
