@@ -9,10 +9,6 @@ float rand1(float n, float factor) {
   return fract(sin(n) * factor);
 }
 
-float rand2(vec2 st) {
-  return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-}
-
 float noise1(float n) {
   float i = floor(n);  // integer
   float j = fract(n);  // fraction
