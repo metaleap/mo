@@ -13,7 +13,7 @@ float rand2(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
-float noise(float n) {
+float noise1(float n) {
   float i = floor(n);  // integer
   float j = fract(n);  // fraction
   return mix(rand1(i, 1.0), rand1(i + 1.0, 1.0), smoothstep(0.0, 1.0, j));
@@ -23,7 +23,7 @@ float noise(float n) {
 void main() {
   vec2 st = (8.5 * (gl_FragCoord.xy / u_resolution)) - (8.5 / 2.0);
   float x = st.x;
-  float y = noise(x);
+  float y = noise1(x);
   vec3 col = vec3(0.2); // default dark backdrop
 
   // grid line if st nearly integer
