@@ -12,10 +12,20 @@ vec2 rand2(vec2 st) {
 }
 
 
+vec2 interpCubic(in vec2 st) {
+  return smoothstep(0.0, 1.0, st);
+}
+
+
+vec2 interpQuintic(in vec2 st) {
+  return st * st * st * ((st * ((st * 6.0) - 15.0)) + 10.0);
+}
+
+
 float noiseIq(in vec2 st) {
   vec2 i = floor(st);
   vec2 f = fract(st);
-  vec2 u = smoothstep(0.0, 1.0, f);
+  vec2 u = interpQuintic(f); // interpCubic(f);
   return mix( mix( dot( rand2(i + vec2(0.0,0.0) ),
                          f - vec2(0.0,0.0) ),
                    dot( rand2(i + vec2(1.0,0.0) ),
@@ -30,8 +40,7 @@ float noiseIq(in vec2 st) {
 void main() {
   vec2 st = gl_FragCoord.xy / u_resolution.xy;
   st.x *= u_resolution.x / u_resolution.y;
-  vec3 color = vec3(0.0);
   vec2 pos = vec2(st * 11.0);
-  color = vec3(noiseIq(pos) * 0.5 + 0.5);
+  vec3 color = vec3(noiseIq(pos) * 0.5 + 0.5);
   out_FragColor = vec4(color, 1.0);
 }
