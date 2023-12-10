@@ -9,8 +9,8 @@ ShaderView::ShaderView() {
 
     this->shaders.push_back(Shader {.src = shaderSrcScratchpadDefault, .isCurrent = true});
     for (const auto &entry : std::filesystem::directory_iterator("../mo2d/appviews/shaderview/shaders"))
-        if ((entry.path().extension() == ".frag")
-            && (entry.path().filename() != "builtin_cheatsheet_preview_dont_rename.frag"))
+        if (((entry.path().extension() == ".frag") && (entry.path() != glslBuiltins1DShaderFilePath))
+            && (entry.path() != glslBuiltins2DShaderFilePath))
             this->shaders.push_back(Shader {.filePath = entry.path()});
 
     this->ensureGlslBuiltinsCheatsheetImageFiles();

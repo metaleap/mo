@@ -17,6 +17,10 @@ const auto shaderSrcScratchpadDefault = "uniform vec2 u_resolution;"
                                         "\n  vec2 st = gl_FragCoord.xy/u_resolution;"
                                         "\n  gl_FragColor = vec4(st.x,st.y,0.0,1.0);"
                                         "\n}";
+const auto glslBuiltins1DShaderFilePath =
+    "../mo2d/appviews/shaderview/shaders/glsl_builtin_1d_cheatsheet_preview_dont_rename.frag";
+const auto glslBuiltins2DShaderFilePath =
+    "../mo2d/appviews/shaderview/shaders/glsl_builtin_2d_cheatsheet_preview_dont_rename.frag";
 
 
 struct Shader {

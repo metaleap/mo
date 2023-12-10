@@ -8,7 +8,7 @@ float none(float n) {
 }
 
 void main() {
-    vec2 st = (7.5 * (gl_FragCoord.xy / u_resolution)) - (7.5 / 2.0);
+    vec2 st = (8.5 * (gl_FragCoord.xy / u_resolution)) - (8.5 / 2.0);
     float x = st.x;
     float y = fn(x);
     vec3 col = vec3(0.2); // default dark backdrop

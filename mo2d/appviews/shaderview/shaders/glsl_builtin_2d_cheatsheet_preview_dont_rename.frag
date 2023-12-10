@@ -4,7 +4,7 @@ out vec4 out_FragColor;
 
 
 void main() {
-    vec2 st = (7.5 * (gl_FragCoord.xy / u_resolution)) - (7.5 / 2.0);
+    vec2 st = (8.5 * (gl_FragCoord.xy / u_resolution)) - (8.5 / 2.0);
     vec3 col = vec3(fn(st.x, st.y));
 
     // grid line if st nearly integer

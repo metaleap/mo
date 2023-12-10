@@ -58,10 +58,10 @@ void ShaderView::guiCheatSheets() {
 void ShaderView::ensureGlslBuiltinsCheatsheetImageFiles() {
     {
         Shader tmp;
-        tmp.filePath = "../mo2d/appviews/shaderview/shaders/glsl_builtin_1d_cheatsheet_preview_dont_rename.frag";
+        tmp.filePath = glslBuiltins1DShaderFilePath;
         this->maybeReloadCurrentShader(&tmp, true, false);
         shaderSrcGlslBuiltin1D = tmp.src;
-        tmp.filePath = "../mo2d/appviews/shaderview/shaders/glsl_builtin_2d_cheatsheet_preview_dont_rename.frag";
+        tmp.filePath = glslBuiltins2DShaderFilePath;
         this->maybeReloadCurrentShader(&tmp, true, false);
         shaderSrcGlslBuiltin2D = tmp.src;
     }
@@ -74,9 +74,7 @@ void ShaderView::ensureGlslBuiltinsCheatsheetImageFiles() {
          }) {
         for (const auto &glsl_builtin_name : pair.second) {
             const auto out_file_path = "../.local/glsl_builtins_pics/" + glsl_builtin_name + "_" + pair.first + ".png";
-            if (is2d || !std::filesystem::exists(out_file_path)) {
-                printf("%s\n", out_file_path.c_str());
-                fflush(stdout);
+            if (!std::filesystem::exists(out_file_path)) {
                 sf::RenderTexture rt;
                 if (!rt.create(size, size))
                     abort();
