@@ -1,8 +1,11 @@
-#version 330
+#version 450
 
 #define PI 3.14159265359
 
 uniform vec2 u_resolution;
+
+out vec4 out_FragColor;
+
 
 float plot(vec2 st, float pct) {
   return smoothstep(pct - 0.02, pct, st.y)
@@ -15,5 +18,5 @@ void main() {
   vec3 col = vec3(y);
   float pct = plot(st, y);
   col = ((1.0 - pct) * col) + (pct * vec3(0.0, 1.0, 0.0));
-  gl_FragColor = vec4(col, 1.0);
+  out_FragColor = vec4(col, 1.0);
 }
