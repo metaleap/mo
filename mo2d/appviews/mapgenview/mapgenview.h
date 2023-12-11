@@ -6,14 +6,14 @@
 #include "../appview.h"
 
 
-struct LiveView : AppView {
-    LiveView();
+struct MapGenView : AppView {
+    MapGenView();
 
     void onUpdate(sf::Time delta);
     void onRender(sf::RenderWindow &window);
 
-    void setupAndLoadResources();
-
-    sf::Texture bgTexture;
-    sf::RectangleShape rect;
+    sf::Texture previewTinyTex;
+    sf::RectangleShape previewTinyRect;
+    sf::Texture previewFullTex;
+    sf::RectangleShape previewFullRect;
 };

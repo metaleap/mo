@@ -22,7 +22,7 @@ var (
 	strBegins    = strings.HasPrefix
 	everLibNames = map[string][]string{
 		"mo2d":             {"imgui", "imgui-sfml", "sfml-graphics", "sfml-window", "sfml-system", "GL"},
-		"mo_noiselib_tuts": {"noise"},
+		"mo_noiselib_tuts": {"imgui", "noise"},
 	}
 )
 
@@ -44,6 +44,7 @@ func main() {
 	var lib_dep_dir_paths []string
 	cur_dir_path := fsAbs(".")
 	var all_source_file_paths []string
+	mo_obj_paths := map[string]bool{}
 	fs.WalkDir(os.DirFS(cur_dir_path), ".", func(fsPath string, fsEntry fs.DirEntry, err error) error {
 		if err != nil {
 			panic(err)
@@ -65,6 +66,8 @@ func main() {
 				File: fsPath,
 				Args: []string{"clang++", "-std=c++20", "-c", "-g", "-O0", fsPath, "-o", "/dev/null/dummy"},
 			})
+		} else if strBegins(fsPath, "mo/") && strEnds(fsPath, ".cpp") {
+			mo_obj_paths[fsCppPathToObjPath(fsPath)] = true
 		}
 		if (!fsEntry.IsDir()) && (strEnds(fsPath, ".cpp") || strEnds(fsPath, ".h")) {
 			all_source_file_paths = append(all_source_file_paths, fsPath)
@@ -114,6 +117,9 @@ func main() {
 				for obj_file_path := range obj_file_paths {
 					buf.WriteString(iIf(is_first, ": ", " ") + obj_file_path)
 					is_first = false
+				}
+				for obj_file_path := range mo_obj_paths {
+					buf.WriteString(" " + obj_file_path)
 				}
 				buf.WriteByte('\n')
 				buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
