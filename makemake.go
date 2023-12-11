@@ -21,8 +21,8 @@ var (
 	strEnds      = strings.HasSuffix
 	strBegins    = strings.HasPrefix
 	everLibNames = map[string][]string{
-		"mo2d":             {"imgui", "imgui-sfml", "sfml-graphics", "sfml-window", "sfml-system", "GL"},
-		"mo_noiselib_tuts": {"imgui", "noise"},
+		"mo2d":             {"noise", "imgui", "imgui-sfml", "sfml-graphics", "sfml-window", "sfml-system", "GL"},
+		"mo_noiselib_tuts": {"noise", "imgui"},
 	}
 )
 

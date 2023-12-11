@@ -1,4 +1,7 @@
+#include <imgui.h>
 #include <SFML/Graphics/Color.hpp>
+
+#include "./libnoise_utils/noiseutils.h"
 
 #include "./mapgenview.h"
 
@@ -15,9 +18,17 @@ MapGenView::MapGenView() {
 }
 
 void MapGenView::onUpdate(sf::Time) {
+    ImGui::Begin("MapGen");
+    if (ImGui::Button("Do it"))
+        this->reGenerate();
+    ImGui::End();
 }
 
 void MapGenView::onRender(sf::RenderWindow &window) {
+
     window.draw(this->previewTinyRect);
     window.draw(this->previewFullRect);
+}
+
+void MapGenView::reGenerate() {
 }

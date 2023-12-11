@@ -4,11 +4,11 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 
-bin/mo2d.exec: bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
-	$(CXX) $(CXXFLAGS) -Lbin -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo2d.exec
+bin/mo2d.exec: bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
+	$(CXX) $(CXXFLAGS) -Lbin -lnoise -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo2d.exec
 
 bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_tuts.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
-	$(CXX) $(CXXFLAGS) -Lbin -limgui -lnoise bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_tuts.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo_noiselib_tuts.exec
+	$(CXX) $(CXXFLAGS) -Lbin -lnoise -limgui bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_tuts.o bin/mo_noiselib_tuts_main.o bin/mo_util_imgui_nodes_nodes.o bin/mo_mo.o -o bin/mo_noiselib_tuts.exec
 
 
 clean:
@@ -25,7 +25,10 @@ bin/mo_util_imgui_nodes_nodes.o: mo/util/imgui_nodes/nodes.cpp mo/util/imgui_nod
 bin/mo2d_appviews_liveview_liveview.o: mo2d/appviews/liveview/liveview.cpp mo2d/appviews/liveview/liveview.h mo2d/appviews/liveview/liveview.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/appviews/liveview/liveview.cpp -o bin/mo2d_appviews_liveview_liveview.o
 
-bin/mo2d_appviews_mapgenview_mapgenview.o: mo2d/appviews/mapgenview/mapgenview.cpp mo2d/appviews/mapgenview/mapgenview.h mo2d/appviews/mapgenview/mapgenview.cpp
+bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o: mo2d/appviews/mapgenview/libnoise_utils/noiseutils.cpp mo2d/appviews/mapgenview/libnoise_utils/noiseutils.h mo2d/appviews/mapgenview/libnoise_utils/noiseutils.cpp
+	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/appviews/mapgenview/libnoise_utils/noiseutils.cpp -o bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o
+
+bin/mo2d_appviews_mapgenview_mapgenview.o: mo2d/appviews/mapgenview/mapgenview.cpp mo2d/appviews/mapgenview/mapgenview.h mo2d/appviews/mapgenview/mapgenview.cpp mo2d/appviews/mapgenview/libnoise_utils/noiseutils.h mo2d/appviews/mapgenview/libnoise_utils/noiseutils.cpp
 	$(CXX) -c $(CXXFLAGS) -Ilibdeps/imgui -Ilibdeps/imgui/backends -Ilibdeps/imgui/misc -Ilibdeps/imgui/misc/cpp -Ilibdeps/imgui/misc/freetype -Ilibdeps/imgui/misc/single_file -Ilibdeps/imgui-sfml -Ilibdeps/libnoise -Ilibdeps/libnoise/include -Ilibdeps/libnoise/include/noise -Ilibdeps/libnoise/include/noise/model -Ilibdeps/libnoise/include/noise/module mo2d/appviews/mapgenview/mapgenview.cpp -o bin/mo2d_appviews_mapgenview_mapgenview.o
 
 bin/mo2d_appviews_shaderview_gui_cheatsheets.o: mo2d/appviews/shaderview/gui_cheatsheets.cpp mo2d/appviews/shaderview/shaderview.h mo2d/appviews/shaderview/shaderview.cpp

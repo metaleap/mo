@@ -12,6 +12,8 @@ struct MapGenView : AppView {
     void onUpdate(sf::Time delta);
     void onRender(sf::RenderWindow &window);
 
+    void reGenerate();
+
     sf::RectangleShape previewTinyRect;
     sf::RectangleShape previewFullRect;
 };
