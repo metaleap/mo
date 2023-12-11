@@ -21,4 +21,5 @@ struct MapGenView : AppView {
     sf::RectangleShape previewFullRect;
     sf::Texture previewFullTex;
     noise::module::Perlin perlinNoise;
+    noise::module::Select finalTerrain;
 };

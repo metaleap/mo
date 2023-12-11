@@ -9,9 +9,12 @@
 
 
 MapGenView::MapGenView() {
-    this->perlinNoise.SetLacunarity(2.222);
+    this->perlinNoise.SetLacunarity(2.111);
     this->perlinNoise.SetOctaveCount(30);
     this->perlinNoise.SetSeed(12);
+    this->finalTerrain.SetBounds(-1000, 10); // full perlin range is "usually but not guaranteed always" -1..1
+    // this->finalTerrain.SetEdgeFalloff(0.11);
+
     this->previewTinyRect.setSize({512, 256});
     this->previewFullRect.setSize({3072, 1536});
     this->previewTinyRect.setOrigin(0, 0);
@@ -54,7 +57,19 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
-    perlinNoise.SetNoiseQuality(tiny ? NoiseQuality::QUALITY_FAST : NoiseQuality::QUALITY_BEST);
+    perlinNoise.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+
+    module::RidgedMulti ridged;
+    ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+    ridged.SetFrequency(perlinNoise.GetFrequency());
+    ridged.SetLacunarity(perlinNoise.GetLacunarity());
+    ridged.SetOctaveCount(perlinNoise.GetOctaveCount());
+    ridged.SetSeed(perlinNoise.GetSeed());
+
+    this->finalTerrain.SetSourceModule(0, ridged);
+    this->finalTerrain.SetSourceModule(1, perlinNoise);
+    this->finalTerrain.SetControlModule(perlinNoise);
+
     utils::NoiseMap heightMap;
     utils::NoiseMapBuilderSphere heightMapBuilder;
     heightMapBuilder.SetSourceModule(perlinNoise);
@@ -69,8 +84,8 @@ void MapGenView::reGenerate(bool tiny) {
     renderer.SetDestImage(image);
     { // coloring
         renderer.ClearGradient();
-        renderer.AddGradientPoint(-1.0000, utils::Color(0, 0, 128, 255));    // deeps
-        renderer.AddGradientPoint(-0.2500, utils::Color(0, 0, 255, 255));    // shallow
+        renderer.AddGradientPoint(-1, utils::Color(0, 0, 128, 255));         // deeps
+        renderer.AddGradientPoint(-0.22, utils::Color(0, 0, 255, 255));      // shallow
         renderer.AddGradientPoint(0.0000, utils::Color(0, 128, 255, 255));   // shore
         renderer.AddGradientPoint(0.0625, utils::Color(240, 240, 64, 255));  // sand
         renderer.AddGradientPoint(0.1250, utils::Color(32, 160, 0, 255));    // grass
