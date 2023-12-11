@@ -1,5 +1,7 @@
 #include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include <SFML/Graphics/View.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
@@ -20,8 +22,8 @@ int main() {
     if (!sf::Shader::isAvailable())
         return 1;
 
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "gfxdev");
-    window.setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
+    sf::RenderWindow window(sf::VideoMode(2560, 1440), "gfxdev");
+    window.setPosition(sf::Vector2i(2560 / 4, 1440 / 4));
     window.setVerticalSyncEnabled(true);
 
     if (!setupAndLoadResources())
@@ -42,6 +44,8 @@ int main() {
         // INPUT
         sf::Event evt;
         while (window.pollEvent(evt)) {
+            if (evt.type == sf::Event::Resized)
+                window.setView(sf::View(sf::FloatRect(0, 0, (float)(evt.size.width), (float)(evt.size.height))));
             if ((evt.type == sf::Event::Closed)
                 || (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))) {
                 window.close();

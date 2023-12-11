@@ -20,7 +20,7 @@ void LiveView::onUpdate(sf::Time) {
 void LiveView::onRender(sf::RenderWindow &window) {
     const auto size_tex = res.bgTexture.getSize();
     res.rect.setTextureRect({0, 0, (int)size_tex.x, (int)size_tex.y});
-    const auto size_window = window.getSize();
+    const auto size_window = window.getView().getSize();
     res.rect.setSize({(float)size_window.x, (float)size_window.y});
     window.draw(res.rect);
 }
