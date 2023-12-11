@@ -3,6 +3,8 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
+#include <noise.h>
+
 #include "../appview.h"
 
 
@@ -18,4 +20,5 @@ struct MapGenView : AppView {
     sf::Texture previewTinyTex;
     sf::RectangleShape previewFullRect;
     sf::Texture previewFullTex;
+    noise::module::Perlin myModule;
 };
