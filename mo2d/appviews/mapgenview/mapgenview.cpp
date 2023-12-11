@@ -9,8 +9,11 @@
 
 
 MapGenView::MapGenView() {
+    this->perlinNoise.SetLacunarity(2.222);
+    this->perlinNoise.SetOctaveCount(30);
+    this->perlinNoise.SetSeed(12);
     this->previewTinyRect.setSize({512, 256});
-    this->previewFullRect.setSize({2048, 1024});
+    this->previewFullRect.setSize({3072, 1536});
     this->previewTinyRect.setOrigin(0, 0);
     this->previewFullRect.setOrigin(0, 0);
     this->previewTinyRect.setPosition(768, 0);
@@ -22,21 +25,21 @@ MapGenView::MapGenView() {
 void MapGenView::onUpdate(sf::Time) {
     ImGui::Begin("MapGen");
     {
-        int seed = myModule.GetSeed();
+        int seed = perlinNoise.GetSeed();
         if (ImGui::InputInt("Seed", &seed))
-            myModule.SetSeed(seed);
-        int num_octaves = myModule.GetOctaveCount();
+            perlinNoise.SetSeed(seed);
+        int num_octaves = perlinNoise.GetOctaveCount();
         if (ImGui::InputInt("Octaves (6-30)", &num_octaves))
-            myModule.SetOctaveCount(num_octaves);
-        float gappiness = (float)(myModule.GetLacunarity());
+            perlinNoise.SetOctaveCount(num_octaves);
+        float gappiness = (float)(perlinNoise.GetLacunarity());
         if (ImGui::InputFloat("Lacunarity (Gappiness)", &gappiness))
-            myModule.SetLacunarity(gappiness);
-        float roughness = (float)(myModule.GetPersistence());
+            perlinNoise.SetLacunarity(gappiness);
+        float roughness = (float)(perlinNoise.GetPersistence());
         if (ImGui::InputFloat("Roughness (Persistence)", &roughness))
-            myModule.SetPersistence(roughness);
-        float extremeness = (float)(myModule.GetFrequency());
+            perlinNoise.SetPersistence(roughness);
+        float extremeness = (float)(perlinNoise.GetFrequency());
         if (ImGui::InputFloat("Extreme-ness (Frequency)", &extremeness))
-            myModule.SetFrequency(extremeness);
+            perlinNoise.SetFrequency(extremeness);
     }
     if (ImGui::Button("Tiny"))
         this->reGenerate(true);
@@ -51,10 +54,10 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
-    myModule.SetNoiseQuality(tiny ? NoiseQuality::QUALITY_FAST : NoiseQuality::QUALITY_BEST);
+    perlinNoise.SetNoiseQuality(tiny ? NoiseQuality::QUALITY_FAST : NoiseQuality::QUALITY_BEST);
     utils::NoiseMap heightMap;
     utils::NoiseMapBuilderSphere heightMapBuilder;
-    heightMapBuilder.SetSourceModule(myModule);
+    heightMapBuilder.SetSourceModule(perlinNoise);
     heightMapBuilder.SetDestNoiseMap(heightMap);
     heightMapBuilder.SetDestSize(tiny ? 512 : 3072, tiny ? 256 : 1536);
     heightMapBuilder.SetBounds(-90.0, 90.0, -180.0, 180.0);
@@ -96,6 +99,7 @@ void MapGenView::reGenerate(bool tiny) {
         this->previewFullRect.setTexture(&this->previewFullTex);
         const auto size_tex = this->previewFullTex.getSize();
         this->previewFullRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
+        this->reGenerate(true);
     }
 
     printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));

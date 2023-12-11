@@ -20,5 +20,5 @@ struct MapGenView : AppView {
     sf::Texture previewTinyTex;
     sf::RectangleShape previewFullRect;
     sf::Texture previewFullTex;
-    noise::module::Perlin myModule;
+    noise::module::Perlin perlinNoise;
 };
