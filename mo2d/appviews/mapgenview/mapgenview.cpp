@@ -1,14 +1,17 @@
+#include <SFML/Graphics/Color.hpp>
+
 #include "./mapgenview.h"
 
 
 MapGenView::MapGenView() {
-    this->previewTinyTex.loadFromFile("/home/_/heap/gd/ease_cheatsheet.png");
-    this->previewTinyRect.setTexture(&this->previewTinyTex);
-    const auto size_tex = this->previewTinyTex.getSize();
-    this->previewTinyRect.setTextureRect({0, 0, (int)size_tex.x, (int)size_tex.y});
-    this->previewTinyRect.setSize({2.0f * (float)(size_tex.x), 2.0f * (float)(size_tex.y)});
+    this->previewTinyRect.setSize({512, 256});
+    this->previewFullRect.setSize({2048, 1024});
     this->previewTinyRect.setOrigin(0, 0);
-    this->previewTinyRect.setPosition(0, 0);
+    this->previewFullRect.setOrigin(0, 0);
+    this->previewTinyRect.setPosition(768, 0);
+    this->previewFullRect.setPosition(0, 320);
+    this->previewTinyRect.setFillColor(sf::Color::Blue);
+    this->previewFullRect.setFillColor(sf::Color::Blue);
 }
 
 void MapGenView::onUpdate(sf::Time) {
@@ -16,4 +19,5 @@ void MapGenView::onUpdate(sf::Time) {
 
 void MapGenView::onRender(sf::RenderWindow &window) {
     window.draw(this->previewTinyRect);
+    window.draw(this->previewFullRect);
 }

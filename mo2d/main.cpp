@@ -34,7 +34,7 @@ int main() {
     ShaderView view_shaders;
     MapGenView view_mapgen;
 
-    AppView* view_current = &view_shaders;
+    AppView* view_current = &view_mapgen;
     std::vector<AppView*> views = {&view_live, &view_shaders, &view_mapgen};
     Gui gui(window, views);
 
