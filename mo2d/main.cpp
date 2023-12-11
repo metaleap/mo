@@ -8,6 +8,7 @@
 #include "./gui/gui.h"
 #include "./appviews/liveview/liveview.h"
 #include "./appviews/shaderview/shaderview.h"
+#include "./appviews/mapgenview/mapgenview.h"
 
 
 struct {
@@ -31,9 +32,10 @@ int main() {
 
     LiveView view_live;
     ShaderView view_shaders;
+    MapGenView view_mapgen;
 
     AppView* view_current = &view_shaders;
-    std::vector<AppView*> views = {&view_live, &view_shaders};
+    std::vector<AppView*> views = {&view_live, &view_shaders, &view_mapgen};
     Gui gui(window, views);
 
     sf::Clock clock;

@@ -58,19 +58,18 @@ func main() {
 				lib_dep_dir_paths = append(lib_dep_dir_paths, fsPath)
 			}
 		}
-		if !strBegins(fsPath, "mo") {
-			return nil
-		} else if (strings.Count(fsPath, "/") == 1) && strEnds(fsPath, "/main.cpp") {
-			clang_compile_commands = append(clang_compile_commands, clangCompileCommand{
-				Dir:  cur_dir_path,
-				File: fsPath,
-				Args: []string{"clang++", "-std=c++20", "-c", "-g", "-O0", fsPath, "-o", "/dev/null/dummy"},
-			})
-		} else if strBegins(fsPath, "mo/") && strEnds(fsPath, ".cpp") {
-			mo_obj_paths[fsCppPathToObjPath(fsPath)] = true
-		}
-		if (!fsEntry.IsDir()) && (strEnds(fsPath, ".cpp") || strEnds(fsPath, ".h")) {
+		if is_cpp, is_h := strEnds(fsPath, ".cpp"), strEnds(fsPath, ".h"); strBegins(fsPath, "mo") && (!fsEntry.IsDir()) && (is_cpp || is_h) {
 			all_source_file_paths = append(all_source_file_paths, fsPath)
+			if strBegins(fsPath, "mo/") {
+				mo_obj_paths[fsCppPathToObjPath(fsPath)] = true
+			}
+			if is_cpp {
+				clang_compile_commands = append(clang_compile_commands, clangCompileCommand{
+					Dir:  cur_dir_path,
+					File: fsPath,
+					Args: []string{"clang++", "-std=c++20", "-c", "-g", "-O0", fsPath, "-o", "/dev/null/dummy"},
+				})
+			}
 		}
 		return nil
 	})
@@ -127,6 +126,9 @@ func main() {
 					buf.WriteString(" -l" + lib_name)
 				}
 				for obj_file_path := range obj_file_paths {
+					buf.WriteString(" " + obj_file_path)
+				}
+				for obj_file_path := range mo_obj_paths {
 					buf.WriteString(" " + obj_file_path)
 				}
 				buf.WriteString(" -o bin/" + prog_name + ".exec\n")
