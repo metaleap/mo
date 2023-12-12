@@ -15,12 +15,12 @@ MapGenView::MapGenView() {
     this->finalTerrain.SetBounds(-1000, 10); // full perlin range is "usually but not guaranteed always" -1..1
     // this->finalTerrain.SetEdgeFalloff(0.11);
 
-    this->previewTinyRect.setSize({512, 256});
+    this->previewTinyRect.setSize({1024, 512});
     this->previewFullRect.setSize({3072, 1536});
     this->previewTinyRect.setOrigin(0, 0);
     this->previewFullRect.setOrigin(0, 0);
     this->previewTinyRect.setPosition(768, 0);
-    this->previewFullRect.setPosition(0, 320);
+    this->previewFullRect.setPosition(0, 624);
     this->previewTinyRect.setFillColor(sf::Color::White);
     this->previewFullRect.setFillColor(sf::Color::White);
 }
@@ -57,6 +57,7 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
+    clock_t t_start = clock();
     perlinNoise.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
 
     module::RidgedMulti ridged;
@@ -74,28 +75,33 @@ void MapGenView::reGenerate(bool tiny) {
     utils::NoiseMapBuilderSphere heightMapBuilder;
     heightMapBuilder.SetSourceModule(perlinNoise);
     heightMapBuilder.SetDestNoiseMap(heightMap);
-    heightMapBuilder.SetDestSize(tiny ? 512 : 3072, tiny ? 256 : 1536);
+    heightMapBuilder.SetDestSize(tiny ? 512 : 2048, tiny ? 256 : 1024);
     heightMapBuilder.SetBounds(-90.0, 90.0, -180.0, 180.0);
     heightMapBuilder.Build();
+    clock_t t_end = clock();
+    printf("heights done: %fsec\n", (float)(t_end - t_start) / CLOCKS_PER_SEC);
 
     utils::RendererImage renderer;
-    utils::Image image;
     renderer.SetSourceNoiseMap(heightMap);
-    renderer.SetDestImage(image);
     { // coloring
         renderer.ClearGradient();
-        renderer.AddGradientPoint(-1, utils::Color(0, 0, 128, 255));         // deeps
-        renderer.AddGradientPoint(-0.22, utils::Color(0, 0, 255, 255));      // shallow
-        renderer.AddGradientPoint(0.0000, utils::Color(0, 128, 255, 255));   // shore
-        renderer.AddGradientPoint(0.0625, utils::Color(240, 240, 64, 255));  // sand
-        renderer.AddGradientPoint(0.1250, utils::Color(32, 160, 0, 255));    // grass
-        renderer.AddGradientPoint(0.3750, utils::Color(224, 224, 0, 255));   // dirt
-        renderer.AddGradientPoint(0.7500, utils::Color(128, 128, 128, 255)); // rock
-        renderer.AddGradientPoint(1.0000, utils::Color(255, 255, 255, 255)); // snow
+        renderer.AddGradientPoint(-1.111, utils::Color(0, 0, 128, 255));   // very-deeps
+        renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
+        renderer.AddGradientPoint(-0.011, utils::Color(0, 128, 255, 255)); // shoal
+        renderer.AddGradientPoint(-0.001, utils::Color(0, 128, 255, 255)); // shoal
+        renderer.AddGradientPoint(0.000, utils::Color(128, 128, 32, 255)); // sand
+        renderer.AddGradientPoint(0.002, utils::Color(128, 160, 0, 255));  // grass
+        renderer.AddGradientPoint(0.125, utils::Color(32, 160, 0, 255));   // grass
+        renderer.AddGradientPoint(0.375, utils::Color(128, 128, 128, 255));
+        renderer.AddGradientPoint(0.750, utils::Color(196, 196, 196, 255));
+        renderer.AddGradientPoint(1.111, utils::Color(255, 255, 255, 255));
         renderer.EnableLight();
         renderer.SetLightContrast(3.21);
         renderer.SetLightBrightness(2.34);
     }
+    utils::Image image;
+    renderer.SetDestImage(image);
+    t_start = clock();
     renderer.Render();
 
     const auto out_file_path = std::filesystem::absolute("../.local/temp_" + std::string(tiny ? "tiny" : "full") + ".bmp");
@@ -103,6 +109,7 @@ void MapGenView::reGenerate(bool tiny) {
     writer.SetSourceImage(image);
     writer.SetDestFilename(out_file_path);
     writer.WriteDestFile();
+    t_end = clock();
 
     if (tiny) {
         this->previewTinyTex.loadFromFile(out_file_path);
@@ -117,5 +124,5 @@ void MapGenView::reGenerate(bool tiny) {
         this->reGenerate(true);
     }
 
-    printf("%fsec\n", ((double_t)(clock())) / ((double_t)(CLOCKS_PER_SEC)));
+    printf("image done: %fsec\n", (float)(t_end - t_start) / CLOCKS_PER_SEC);
 }
