@@ -14,6 +14,7 @@
 #include <string>
 
 #include "./mapgenview.h"
+#include "interp.h"
 #include "libnoise_utils/noiseutils.h"
 
 
@@ -29,9 +30,31 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
 float mix(float x, float y, float a) {
     return (x * (1.0f - a)) + (y * a);
 }
-float smoothstep(float e0, float e1, float a) {
-    a = std::clamp((a - e0) / (e1 - e0), 0.0f, 1.0f);
-    return a * a * (3.0f - (2.0f * a));
+float frac(float n) {
+    return n - floorf(n);
+}
+float smoothstep(float edge0, float edge1, float x) {
+    // Scale, bias and saturate x to 0..1 range
+    x = std::clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+    // Evaluate polynomial
+    return x * x * (3.0f - 2.0f * x);
+}
+double cubicInterpolate(double p[4], double x) {
+    return p[1]
+           + 0.5 * x
+                 * (p[2] - p[0]
+                    + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
+}
+double bicubicInterpolate(double p[4][4], double x, double y) {
+    double arr[4];
+    arr[0] = cubicInterpolate(p[0], y);
+    arr[1] = cubicInterpolate(p[1], y);
+    arr[2] = cubicInterpolate(p[2], y);
+    arr[3] = cubicInterpolate(p[3], y);
+    return cubicInterpolate(arr, x);
+}
+float weight(float x, float y) {
+    return (x * x) * (y * y) * (9 - 6 * x - 6 * y + 4 * x * y);
 }
 
 
@@ -63,6 +86,7 @@ MapGenView::MapGenView() {
         rect_and_tex.first->setSmooth(true);
         rect_and_tex.first->setRepeated(false);
     }
+    this->mapViewTileTex.setSmooth(false);
 
     this->mapViewFullRect.setPosition(0, 512 + 64);
     this->mapViewFullRect.setSize({(worldDisplayScale * (float)worldWidthKm), (worldDisplayScale * (float)worldHeightKm)});
@@ -238,24 +262,15 @@ void MapGenView::generateTileOrArea() {
             float x_here = x_full + x_off, y_here = y_full + y_off;
             float x_less = floorf(x_here), x_more = ceilf(x_here);
             float y_less = floorf(y_here), y_more = ceilf(y_here);
+            float x_frac = x_here - x_less, y_frac = y_here - y_less;
 
-            float elev1 = this->worldElevMap.GetValue(x_less, y_less);
-            float dist1 = sqrt((x_less * x_less) + (y_less * y_less));
-            float elev2 = this->worldElevMap.GetValue(x_more, y_less);
-            float dist2 = sqrt((x_more * x_more) + (y_less * y_less));
-            float elev3 = this->worldElevMap.GetValue(x_less, y_more);
-            float dist3 = sqrt((x_less * x_less) + (y_more * y_more));
-            float elev4 = this->worldElevMap.GetValue(x_more, y_more);
-            float dist4 = sqrt((x_more * x_more) + (y_more * y_more));
+            // codeproject.com/Articles/5312360/2-D-Interpolation-Functions
+            float elev = weight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
+                         + weight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
+                         + weight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
+                         + weight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
 
-            if (x == 2000 && y == 2000) {
-                printf("e1=%.3f d1=%.1f\n", elev1, dist1);
-                printf("e2=%.3f d2=%.1f\n", elev2, dist2);
-                printf("e3=%.3f d3=%.1f\n", elev3, dist3);
-                printf("e4=%.3f d4=%.1f\n", elev4, dist4);
-            }
-
-            elev_tile.SetValue(x, y, 0.25f * (elev1 + elev2 + elev3 + elev4));
+            elev_tile.SetValue(x, y, (float)elev);
         }
     }
 
