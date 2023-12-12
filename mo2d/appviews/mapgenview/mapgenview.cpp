@@ -39,21 +39,7 @@ float smoothstep(float edge0, float edge1, float x) {
     // Evaluate polynomial
     return x * x * (3.0f - 2.0f * x);
 }
-double cubicInterpolate(double p[4], double x) {
-    return p[1]
-           + 0.5 * x
-                 * (p[2] - p[0]
-                    + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
-}
-double bicubicInterpolate(double p[4][4], double x, double y) {
-    double arr[4];
-    arr[0] = cubicInterpolate(p[0], y);
-    arr[1] = cubicInterpolate(p[1], y);
-    arr[2] = cubicInterpolate(p[2], y);
-    arr[3] = cubicInterpolate(p[3], y);
-    return cubicInterpolate(arr, x);
-}
-float weight(float x, float y) {
+float interpWeight(float x, float y) {
     return (x * x) * (y * y) * (9 - 6 * x - 6 * y + 4 * x * y);
 }
 
@@ -264,11 +250,11 @@ void MapGenView::generateTileOrArea() {
             float y_less = floorf(y_here), y_more = ceilf(y_here);
             float x_frac = x_here - x_less, y_frac = y_here - y_less;
 
-            // codeproject.com/Articles/5312360/2-D-Interpolation-Functions
-            float elev = weight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
-                         + weight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
-                         + weight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
-                         + weight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
+            // codeproject.com/Articles/5312360/2-D-Interpolation-Functions "constrained bicubic"
+            float elev = interpWeight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
+                         + interpWeight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
+                         + interpWeight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
+                         + interpWeight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
 
             elev_tile.SetValue(x, y, (float)elev);
         }
