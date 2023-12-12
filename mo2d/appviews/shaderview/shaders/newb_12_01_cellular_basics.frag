@@ -15,9 +15,9 @@ void main() {
   point[2] = vec2(0.28, 0.64);
   point[3] =  vec2(0.31, 0.26);
 
-  float dist = 1.0;
+  float min_dist = 1.0;
   for (int i = 0; i < 4; i++)
-    dist = min(dist, distance(st, point[i]));
+    min_dist = min(min_dist, distance(st, point[i]));
 
-  out_FragColor = vec4(vec3(dist), 1.0);
+  out_FragColor = vec4(vec3(min_dist), 1.0);
 }

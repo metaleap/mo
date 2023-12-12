@@ -9,6 +9,7 @@
 #include <map>
 
 #include <imgui.h>
+#include <math.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 
@@ -27,6 +28,10 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
 
 float mix(float x, float y, float a) {
     return (x * (1.0f - a)) + (y * a);
+}
+float smoothstep(float e0, float e1, float a) {
+    a = std::clamp((a - e0) / (e1 - e0), 0.0f, 1.0f);
+    return a * a * (3.0f - (2.0f * a));
 }
 
 
@@ -221,28 +226,36 @@ void MapGenView::generateTileOrArea() {
         return;
     utils::NoiseMap elev_tile;
     elev_tile.SetSize(worldTileSize, worldTileSize);
-    for (int x = 0; x < worldTileSize; x++)
-        for (int y = 0; y < worldTileSize; y++) {
-            elev_tile.SetValue(x, y, -1);
-        }
 
-    const float w_tile = (float)(this->worldElevMap.GetWidth() / this->numTiles.x);
-    const float h_tile = (float)(this->worldElevMap.GetHeight() / this->numTiles.y);
-    const float x_tile = (float)(this->tileX) * w_tile;
-    const float y_tile = (float)(this->tileY) * h_tile;
+    float x_full = ((float)worldWidthKm) * ((float)this->tileX / (float)this->numTiles.x);
+    float y_full = ((float)worldHeightKm) * ((float)this->tileY / (float)this->numTiles.y);
+    float x_num = ((float)worldWidthKm) / ((float)this->numTiles.x);
+    float y_num = ((float)worldHeightKm) / ((float)this->numTiles.y);
     for (int x = 0; x < worldTileSize; x++) {
-        float fx = ((float)x) / ((float)worldTileSize);
+        float x_off = (x_num / (float)worldTileSize) * (float)x;
         for (int y = 0; y < worldTileSize; y++) {
-            float fy = ((float)y) / ((float)worldTileSize);
-            const float x_full = x_tile + (w_tile * fx);
-            const float y_full = y_tile + (h_tile * fy);
-            if (x == 4095 && y == 4095) {
-                printf("wt=%.1f ht=%.1f xt=%.1f yt=%.1f xf=%.1f yf=%.1f xfull=%.1f yfull=%.1f\n", w_tile, h_tile, x_tile,
-                       y_tile, fx, fy, x_full, y_full);
-                fflush(stdout);
+            float y_off = (y_num / (float)worldTileSize) * (float)y;
+            float x_here = x_full + x_off, y_here = y_full + y_off;
+            float x_less = floorf(x_here), x_more = ceilf(x_here);
+            float y_less = floorf(y_here), y_more = ceilf(y_here);
+
+            float elev1 = this->worldElevMap.GetValue(x_less, y_less);
+            float dist1 = sqrt((x_less * x_less) + (y_less * y_less));
+            float elev2 = this->worldElevMap.GetValue(x_more, y_less);
+            float dist2 = sqrt((x_more * x_more) + (y_less * y_less));
+            float elev3 = this->worldElevMap.GetValue(x_less, y_more);
+            float dist3 = sqrt((x_less * x_less) + (y_more * y_more));
+            float elev4 = this->worldElevMap.GetValue(x_more, y_more);
+            float dist4 = sqrt((x_more * x_more) + (y_more * y_more));
+
+            if (x == 2000 && y == 2000) {
+                printf("e1=%.3f d1=%.1f\n", elev1, dist1);
+                printf("e2=%.3f d2=%.1f\n", elev2, dist2);
+                printf("e3=%.3f d3=%.1f\n", elev3, dist3);
+                printf("e4=%.3f d4=%.1f\n", elev4, dist4);
             }
-            const float elev = this->worldElevMap.GetValue(x_full, y_full);
-            elev_tile.SetValue(x, y, elev);
+
+            elev_tile.SetValue(x, y, 0.25f * (elev1 + elev2 + elev3 + elev4));
         }
     }
 
@@ -253,6 +266,7 @@ void MapGenView::generateTileOrArea() {
     this->mapViewTileRect.setTexture(&this->mapViewTileTex);
     const auto size_tex_tile = this->mapViewTileTex.getSize();
     this->mapViewTileRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_tile.x), (int)(size_tex_tile.y)});
+    fflush(stdout);
 }
 
 void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs) {
