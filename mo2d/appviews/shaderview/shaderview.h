@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Window/Event.hpp>
 #include <filesystem>
 
 #include <SFML/Graphics/RectangleShape.hpp>
@@ -38,8 +39,9 @@ struct ShaderView : AppView {
 
     ShaderView();
 
-    void onUpdate(sf::Time delta);
+    void onUpdate(const sf::Time &delta);
     void onRender(sf::RenderWindow &window);
+    void onInput(const sf::Event &evt);
 
     bool setupAndLoadResources();
     void maybeReloadCurrentShader(Shader* curShader, bool force, bool load = true);

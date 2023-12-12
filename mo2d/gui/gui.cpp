@@ -18,8 +18,10 @@ Gui::Gui(sf::RenderWindow &win, std::vector<AppView*> views) : window(win), view
     assert(ImGui::SFML::UpdateFontTexture());
 }
 
-void Gui::onInput(const sf::Event evt) {
+void Gui::onInput(const sf::Event &evt) {
     ImGui::SFML::ProcessEvent(this->window, evt);
+    for (auto view : this->views)
+        view->onInput(evt);
 }
 
 void Gui::onUpdate(const sf::Time delta) {

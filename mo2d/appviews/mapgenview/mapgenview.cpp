@@ -1,5 +1,6 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Window/Event.hpp>
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -53,7 +54,18 @@ MapGenView::MapGenView() {
     this->mapViewTileRect.setSize({512, 512});
 }
 
-void MapGenView::onUpdate(sf::Time) {
+void MapGenView::onInput(const sf::Event &evt) {
+    if (evt.type == sf::Event::MouseMoved) {
+        const auto mx = (float)evt.mouseMove.x, my = (float)evt.mouseMove.y;
+        const auto pos_mapview = mapViewFullRect.getPosition();
+        const auto size_mapview = mapViewFullRect.getSize();
+        if ((mx >= pos_mapview.x) && (mx <= (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
+            && (my <= (pos_mapview.y + size_mapview.y))) {
+        }
+    }
+}
+
+void MapGenView::onUpdate(const sf::Time &) {
     ImGui::Begin("MapGen");
     {
         if (ImGui::InputText("Map Name", &this->seedName)) {

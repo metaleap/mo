@@ -1,11 +1,15 @@
 #include "./liveview.h"
+#include <SFML/Window/Event.hpp>
 
 
 LiveView::LiveView() {
     this->setupAndLoadResources();
 }
 
-void LiveView::onUpdate(sf::Time) {
+void LiveView::onUpdate(const sf::Time &) {
+}
+
+void LiveView::onInput(const sf::Event &) {
 }
 
 void LiveView::onRender(sf::RenderWindow &window) {

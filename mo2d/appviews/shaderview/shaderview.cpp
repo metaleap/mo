@@ -16,7 +16,10 @@ ShaderView::ShaderView() {
     this->ensureGlslBuiltinsCheatsheetImageFiles();
 }
 
-void ShaderView::onUpdate(sf::Time) {
+void ShaderView::onInput(const sf::Event &) {
+}
+
+void ShaderView::onUpdate(const sf::Time &) {
     this->guiShaders();
     this->guiCheatSheets();
 }
