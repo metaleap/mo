@@ -21,7 +21,7 @@ MapGenView::MapGenView() {
     this->perlinNoise.SetLacunarity(2.121);
     this->perlinNoise.SetOctaveCount(30);
     this->perlinNoise.SetSeed(12);
-    this->perlinNoise.SetPersistence(0.531);
+    this->perlinNoise.SetPersistence(0.515);
     this->finalTerrain.SetBounds(-1000, 10); // full perlin range is "usually but not guaranteed always" -1..1
     // this->finalTerrain.SetEdgeFalloff(0.11);
 
