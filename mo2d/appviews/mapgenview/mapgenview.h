@@ -17,10 +17,14 @@ struct MapGenView : AppView {
     void onInput(const sf::Event &evt);
 
     void reGenerate(bool tiny);
+    void generateTileAndArea();
 
     std::string seedName = "foo bar";
     noise::module::Perlin worldElev;
-
+    float mouseLon = 0.0;
+    float mouseLat = 0.0;
+    float tileLon = 0.0;
+    float tileLat = 0.0;
     sf::RectangleShape mapViewTinyRect;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
