@@ -1,3 +1,5 @@
+#include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/Texture.hpp>
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -20,25 +22,35 @@ float mix(float x, float y, float a) {
 
 
 MapGenView::MapGenView() {
-    this->perlinNoise.SetLacunarity(2.121);
-    this->perlinNoise.SetOctaveCount(30);
-    this->perlinNoise.SetSeed(12);
-    this->perlinNoise.SetPersistence(0.515);
-    this->perlinNoise.SetFrequency(1.221);
+    this->worldElev.SetLacunarity(2.121);
+    this->worldElev.SetOctaveCount(30);
+    this->worldElev.SetSeed(12);
+    this->worldElev.SetPersistence(0.515);
+    this->worldElev.SetFrequency(1.221);
 
-    this->previewTinyRect.setSize({1024, 512});
-    this->previewFullRect.setSize({3072, 1536});
-    this->previewTinyRect.setOrigin(0, 0);
-    this->previewFullRect.setOrigin(0, 0);
-    this->previewTinyRect.setPosition(0, 0);
-    this->previewFullRect.setPosition(0, 624);
-    this->previewTinyRect.setFillColor(sf::Color::White);
-    this->previewFullRect.setFillColor(sf::Color::White);
+    for (auto rect_and_tex : std::map<sf::Texture*, sf::RectangleShape*> {
+             {&this->mapViewTinyTex, &this->mapViewTinyRect},
+             {&this->mapViewFullTex, &this->mapViewFullRect},
+             {&this->mapViewTileTex, &this->mapViewTileRect},
+             {&this->mapViewAreaTex, &this->mapViewAreaRect},
+         }) {
+        rect_and_tex.second->setOrigin(0, 0);
+        rect_and_tex.second->setFillColor(sf::Color::White);
+        rect_and_tex.first->setSmooth(true);
+        rect_and_tex.first->setRepeated(false);
+    }
 
-    this->previewFullTex.setSmooth(true);
-    this->previewFullTex.setRepeated(false);
-    this->previewTinyTex.setSmooth(true);
-    this->previewTinyTex.setRepeated(false);
+    this->mapViewFullRect.setPosition(0, 624);
+    this->mapViewFullRect.setSize({3072, 1536});
+
+    this->mapViewTinyRect.setPosition(0, 0);
+    this->mapViewTinyRect.setSize({1024, 512});
+
+    this->mapViewAreaRect.setPosition(1024 + 128, 0);
+    this->mapViewAreaRect.setSize({512, 512});
+
+    this->mapViewTileRect.setPosition(1024 + 128 + 512 + 128, 0);
+    this->mapViewTileRect.setSize({512, 512});
 }
 
 void MapGenView::onUpdate(sf::Time) {
@@ -50,17 +62,17 @@ void MapGenView::onUpdate(sf::Time) {
             std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
             std::hash<std::string> hasher;
             auto hash = hasher(this->seedName + upper);
-            this->perlinNoise.SetSeed((int)hash);
+            this->worldElev.SetSeed((int)hash);
         }
-        float gappiness = (float)(perlinNoise.GetLacunarity());
+        float gappiness = (float)(worldElev.GetLacunarity());
         if (ImGui::InputFloat("Lacunarity (Gappiness)", &gappiness))
-            perlinNoise.SetLacunarity(gappiness);
-        float roughness = (float)(perlinNoise.GetPersistence());
+            worldElev.SetLacunarity(gappiness);
+        float roughness = (float)(worldElev.GetPersistence());
         if (ImGui::InputFloat("Roughness (Persistence)", &roughness))
-            perlinNoise.SetPersistence(roughness);
-        float extremeness = (float)(perlinNoise.GetFrequency());
+            worldElev.SetPersistence(roughness);
+        float extremeness = (float)(worldElev.GetFrequency());
         if (ImGui::InputFloat("Extreme-ness (Frequency)", &extremeness))
-            perlinNoise.SetFrequency(extremeness);
+            worldElev.SetFrequency(extremeness);
     }
     if (ImGui::Button("Tiny"))
         this->reGenerate(true);
@@ -70,16 +82,18 @@ void MapGenView::onUpdate(sf::Time) {
 }
 
 void MapGenView::onRender(sf::RenderWindow &window) {
-    window.draw(this->previewTinyRect);
-    window.draw(this->previewFullRect);
+    window.draw(this->mapViewFullRect);
+    window.draw(this->mapViewTinyRect);
+    window.draw(this->mapViewAreaRect);
+    window.draw(this->mapViewTileRect);
 }
 
 void MapGenView::reGenerate(bool tiny) {
     clock_t t_start = clock();
-    perlinNoise.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+    worldElev.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
 
     module::ScaleBias scaler;
-    scaler.SetSourceModule(0, perlinNoise);
+    scaler.SetSourceModule(0, worldElev);
     scaler.SetScale(0.4);
 
     {
@@ -160,15 +174,15 @@ void MapGenView::reGenerate(bool tiny) {
         t_end = clock();
 
         if (tiny) {
-            this->previewTinyTex.loadFromFile(out_file_path);
-            this->previewTinyRect.setTexture(&this->previewTinyTex);
-            const auto size_tex = this->previewTinyTex.getSize();
-            this->previewTinyRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
+            this->mapViewTinyTex.loadFromFile(out_file_path);
+            this->mapViewTinyRect.setTexture(&this->mapViewTinyTex);
+            const auto size_tex = this->mapViewTinyTex.getSize();
+            this->mapViewTinyRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
         } else {
-            this->previewFullTex.loadFromFile(out_file_path);
-            this->previewFullRect.setTexture(&this->previewFullTex);
-            const auto size_tex = this->previewFullTex.getSize();
-            this->previewFullRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
+            this->mapViewFullTex.loadFromFile(out_file_path);
+            this->mapViewFullRect.setTexture(&this->mapViewFullTex);
+            const auto size_tex = this->mapViewFullTex.getSize();
+            this->mapViewFullRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
             this->reGenerate(true);
         }
 

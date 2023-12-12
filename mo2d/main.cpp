@@ -49,7 +49,7 @@ int main() {
             if (evt.type == sf::Event::Resized)
                 window.setView(sf::View(sf::FloatRect(0, 0, (float)(evt.size.width), (float)(evt.size.height))));
             if ((evt.type == sf::Event::Closed)
-                || (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))) {
+                || (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && sf::Keyboard::isKeyPressed(sf::Keyboard::RControl))) {
                 window.close();
                 break;
             }

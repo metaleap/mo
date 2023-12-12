@@ -16,10 +16,15 @@ struct MapGenView : AppView {
 
     void reGenerate(bool tiny);
 
-    std::string seedName = "world name";
-    sf::RectangleShape previewTinyRect;
-    sf::Texture previewTinyTex;
-    sf::RectangleShape previewFullRect;
-    sf::Texture previewFullTex;
-    noise::module::Perlin perlinNoise;
+    std::string seedName = "foo bar";
+    noise::module::Perlin worldElev;
+
+    sf::RectangleShape mapViewTinyRect;
+    sf::Texture mapViewTinyTex;
+    sf::RectangleShape mapViewFullRect;
+    sf::Texture mapViewFullTex;
+    sf::RectangleShape mapViewTileRect;
+    sf::Texture mapViewTileTex;
+    sf::RectangleShape mapViewAreaRect;
+    sf::Texture mapViewAreaTex;
 };
