@@ -11,9 +11,8 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
-#include "./libnoise_utils/noiseutils.h"
-
 #include "./mapgenview.h"
+#include "libnoise_utils/noiseutils.h"
 
 
 
@@ -23,11 +22,12 @@ float mix(float x, float y, float a) {
 
 
 MapGenView::MapGenView() {
-    this->worldElev.SetLacunarity(2.121);
-    this->worldElev.SetOctaveCount(30);
-    this->worldElev.SetSeed(12);
-    this->worldElev.SetPersistence(0.515);
-    this->worldElev.SetFrequency(1.221);
+    this->worldElevGen.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+    this->worldElevGen.SetLacunarity(2.121);
+    this->worldElevGen.SetOctaveCount(30);
+    this->worldElevGen.SetSeed(12);
+    this->worldElevGen.SetPersistence(0.515);
+    this->worldElevGen.SetFrequency(1.221);
 
     for (auto rect_and_tex : std::map<sf::Texture*, sf::RectangleShape*> {
              {&this->mapViewTinyTex, &this->mapViewTinyRect},
@@ -61,15 +61,13 @@ void MapGenView::onInput(const sf::Event &evt) {
         const auto size_mapview = mapViewFullRect.getSize();
         if ((mx >= pos_mapview.x) && (mx <= (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
             && (my <= (pos_mapview.y + size_mapview.y))) {
-            auto nx = (mx - pos_mapview.x) / size_mapview.x; // 0..1
-            auto ny = (my - pos_mapview.y) / size_mapview.y; // 0..1
-            this->mouseLon = (nx * 360.0f) - 180.0f;
-            this->mouseLat = (ny * 180.0f) - 90.0f;
+            this->mouseX = (mx - pos_mapview.x) / size_mapview.x; // 0..1
+            this->mouseY = (my - pos_mapview.y) / size_mapview.y; // 0..1
         }
     }
     if (evt.type == sf::Event::MouseButtonReleased) {
-        this->tileLat = this->mouseLat;
-        this->tileLon = this->mouseLon;
+        this->tileX = this->mouseX;
+        this->tileY = this->mouseY;
         this->generateTileAndArea();
     }
 }
@@ -83,24 +81,24 @@ void MapGenView::onUpdate(const sf::Time &) {
             std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
             std::hash<std::string> hasher;
             auto hash = hasher(this->seedName + upper);
-            this->worldElev.SetSeed((int)hash);
+            this->worldElevGen.SetSeed((int)hash);
         }
-        float gappiness = (float)(worldElev.GetLacunarity());
+        float gappiness = (float)(worldElevGen.GetLacunarity());
         if (ImGui::InputFloat("Lacunarity (Gappiness)", &gappiness))
-            worldElev.SetLacunarity(gappiness);
-        float roughness = (float)(worldElev.GetPersistence());
+            worldElevGen.SetLacunarity(gappiness);
+        float roughness = (float)(worldElevGen.GetPersistence());
         if (ImGui::InputFloat("Roughness (Persistence)", &roughness))
-            worldElev.SetPersistence(roughness);
-        float extremeness = (float)(worldElev.GetFrequency());
+            worldElevGen.SetPersistence(roughness);
+        float extremeness = (float)(worldElevGen.GetFrequency());
         if (ImGui::InputFloat("Extreme-ness (Frequency)", &extremeness))
-            worldElev.SetFrequency(extremeness);
+            worldElevGen.SetFrequency(extremeness);
     }
     if (ImGui::Button("Tiny"))
         this->reGenerate(true);
     if (ImGui::Button("Full"))
         this->reGenerate(false);
-    ImGui::LabelText("Tile under mouse", "lon=%d · lat=%d", (int)this->mouseLon, (int)this->mouseLat);
-    ImGui::LabelText("Tile shown", "lon=%d · lat=%d", (int)this->tileLon, (int)this->tileLat);
+    ImGui::LabelText("Tile under mouse", "lon=%d · lat=%d", (int)this->mouseX, (int)this->mouseY);
+    ImGui::LabelText("Tile shown", "lon=%d · lat=%d", (int)this->tileX, (int)this->tileY);
     ImGui::End();
 }
 
@@ -112,66 +110,62 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
-    if (!tiny) {
-        this->mapViewFullRect.setTexture(nullptr);
-        this->mapViewTinyRect.setTexture(nullptr);
-        this->mapViewAreaRect.setTexture(nullptr);
-        this->mapViewTileRect.setTexture(nullptr);
-    }
+    this->mapViewAreaRect.setTexture(nullptr);
+    this->mapViewTileRect.setTexture(nullptr);
+    this->tileY = -1.0;
+    this->tileY = -1.0;
 
     clock_t t_start = clock();
-    worldElev.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+    module::ScaleBias elev_scaler;
+    elev_scaler.SetSourceModule(0, worldElevGen);
+    elev_scaler.SetScale(0.4);
 
-    module::ScaleBias scaler;
-    scaler.SetSourceModule(0, worldElev);
-    scaler.SetScale(0.4);
-
-    utils::NoiseMap heightMap;
-    utils::NoiseMapBuilderSphere heightMapBuilder;
-    heightMapBuilder.SetSourceModule(scaler);
-    heightMapBuilder.SetDestNoiseMap(heightMap);
-    heightMapBuilder.SetDestSize(tiny ? 1024 : 4096, tiny ? 512 : 2048);
-    heightMapBuilder.SetBounds(-90.0, 90.0, -180.0, 180.0);
-    heightMapBuilder.Build();
+    utils::NoiseMapBuilderSphere builder;
+    builder.SetSourceModule(elev_scaler);
+    builder.SetDestNoiseMap(this->worldElevMap);
+    builder.SetDestSize(tiny ? 1024 : (1 * 4096), tiny ? 512 : (1 * 2048));
+    builder.SetBounds(-90.0, 90.0, -180.0, 180.0);
+    builder.Build();
     clock_t t_end = clock();
     // ensure full ocean-ness at northern and southern map borders
-    for (int y = 0, h = heightMap.GetHeight(), y_h = h / 8; y < y_h; y++) {
+    for (int y = 0, h = this->worldElevMap.GetHeight(), y_h = h / 8; y < y_h; y++) {
         const float weight = sqrt(sqrt(((float)y / (float)y_h))); // (0 -> force ocean) .. (1 -> keep as-is)
-        for (int x = 0, w = heightMap.GetWidth(); x < w; x++) {
-            auto value = heightMap.GetValue(x, y);
-            heightMap.SetValue(x, y, mix(-1, value, weight));
-            value = heightMap.GetValue(x, h - y);
-            heightMap.SetValue(x, h - y, mix(-1, value, weight));
+        for (int x = 0, w = this->worldElevMap.GetWidth(); x < w; x++) {
+            auto value = this->worldElevMap.GetValue(x, y);
+            this->worldElevMap.SetValue(x, y, mix(-1, value, weight));
+            value = this->worldElevMap.GetValue(x, h - y);
+            this->worldElevMap.SetValue(x, h - y, mix(-1, value, weight));
         }
     }
     // re-scale from actual mins and maxes to true -1..1 with exact 0 remaining equal
     if (!tiny) {
         float height_max = -3.21f, height_min = 3.21f;
         float height_max_new = -3.21f, height_min_new = 3.21f;
-        for (int w = heightMap.GetWidth(), h = heightMap.GetHeight(), x = 0; x < w; x++)
+        for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
             for (int y = 0; y < h; y++) {
-                const auto height = heightMap.GetValue(x, y);
+                const auto height = this->worldElevMap.GetValue(x, y);
                 height_max = std::max(height_max, height);
                 height_min = std::min(height_min, height);
             }
         const float scale_factor_below = -0.98765431f / height_min; // vs -1.0 this _does_ make THE difference
         const float scale_factor_above = 0.98765431f / height_max;  // for the extreme outlier cases
-        for (int w = heightMap.GetWidth(), h = heightMap.GetHeight(), x = 0; x < w; x++)
+        for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
             for (int y = 0; y < h; y++) { // planet of love
-                float height = heightMap.GetValue(x, y);
+                float height = this->worldElevMap.GetValue(x, y);
                 height = height * ((height < 0) ? scale_factor_below : scale_factor_above);
                 height_max_new = std::max(height_max_new, height);
                 height_min_new = std::min(height_min_new, height);
-                heightMap.SetValue(x, y, height);
+                this->worldElevMap.SetValue(x, y, height);
                 if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
-                    heightMap.SetValue(x, y, 1.234f);
+                    this->worldElevMap.SetValue(x, y, 1.234f);
             }
         printf("heights done: min=%f->%f,max=%f->%f, %fsec\n", height_min, height_min_new, height_max, height_max_new,
                (float)(t_end - t_start) / CLOCKS_PER_SEC);
+        fflush(stdout);
     }
 
     utils::RendererImage renderer;
-    renderer.SetSourceNoiseMap(heightMap);
+    renderer.SetSourceNoiseMap(this->worldElevMap);
     { // coloring
         renderer.ClearGradient();
         renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
@@ -211,7 +205,8 @@ void MapGenView::reGenerate(bool tiny) {
         this->mapViewFullRect.setTexture(&this->mapViewFullTex);
         const auto size_tex = this->mapViewFullTex.getSize();
         this->mapViewFullRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
-        this->reGenerate(false);
+        this->mapViewTinyRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
+        this->mapViewTinyRect.setTexture(&this->mapViewFullTex);
     }
 
     printf("%s: %fsec\n", out_file_path.c_str(), (float)(t_end - t_start) / CLOCKS_PER_SEC);
@@ -219,4 +214,5 @@ void MapGenView::reGenerate(bool tiny) {
 }
 
 void MapGenView::generateTileAndArea() {
+    utils::NoiseMapBuilderPlane map_builder;
 }
