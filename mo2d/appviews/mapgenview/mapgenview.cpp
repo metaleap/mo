@@ -16,6 +16,12 @@
 #include "libnoise_utils/noiseutils.h"
 
 
+const int worldWidthKm = 4096;
+const int worldHeightKm = 2048;
+const int worldTileSize = 4096;
+const int worldElevDistanceM = 10;
+
+
 void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs);
 
 float mix(float x, float y, float a) {
@@ -30,6 +36,11 @@ MapGenView::MapGenView() {
     this->worldElevGen.SetSeed(12);
     this->worldElevGen.SetPersistence(0.515);
     this->worldElevGen.SetFrequency(1.221);
+    this->tileSelRect.setFillColor(sf::Color(255, 255, 255, 64));
+    this->tileSelRect.setOutlineColor(sf::Color(255, 255, 255, 255));
+    this->tileSelRect.setOutlineThickness(1.0);
+    this->tileSelRect.setOrigin(0, 0);
+    this->tileSelRect.setPosition(0, 512 + 32);
 
     for (auto rect_and_tex : std::map<sf::Texture*, sf::RectangleShape*> {
              {&this->mapViewTinyTex, &this->mapViewTinyRect},
@@ -63,19 +74,23 @@ void MapGenView::onInput(const sf::Event &evt) {
         const auto size_mapview = mapViewFullRect.getSize();
         if ((mx >= pos_mapview.x) && (mx < (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
             && (my < (pos_mapview.y + size_mapview.y))) {
-            this->mouseX = (mx - pos_mapview.x) / size_mapview.x; // 0..1
-            this->mouseY = (my - pos_mapview.y) / size_mapview.y; // 0..1
+            this->mouseX = (mx - pos_mapview.x) / size_mapview.x;          // 0..1
+            this->mouseY = 1.0f - ((my - pos_mapview.y) / size_mapview.y); // 0..1
         } else {
             this->mouseX = -1.0;
             this->mouseY = -1.0;
         }
     }
     if ((evt.type == sf::Event::MouseButtonReleased)) {
-        const auto num_tiles_x = ((4096 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
-        const auto num_tiles_y = ((2048 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+        const auto num_tiles_x = ((worldWidthKm * 1000) / worldElevDistanceM) / worldTileSize /*tile size*/;
+        const auto num_tiles_y = ((worldHeightKm * 1000) / worldElevDistanceM) / worldTileSize /*tile size*/;
         if ((this->mouseX >= 0) && (this->mouseX < 1.0) && ((this->mouseY >= 0) && (this->mouseY < 1.0))) {
             this->tileX = (int)(this->mouseX * (float)num_tiles_x);
             this->tileY = (int)(this->mouseY * (float)num_tiles_y);
+            const float tile_kms = 0.001f * (float)(worldTileSize * 10);
+            const float tile_factor = worldWidthKm / tile_kms;
+            printf("%d %d\n", num_tiles_x, num_tiles_y);
+            fflush(stdout);
         }
     }
 }
@@ -107,7 +122,7 @@ void MapGenView::onUpdate(const sf::Time &) {
         this->reGenerate(false);
     ImGui::LabelText("Mouse", "x=%.2f , y=%.2f", this->mouseX, this->mouseY);
     if (ImGui::Button((std::to_string(this->tileX) + "," + std::to_string(this->tileY)).c_str()))
-        this->generateTileAndArea();
+        this->generateTileOrArea();
     ImGui::End();
 }
 
@@ -116,6 +131,7 @@ void MapGenView::onRender(sf::RenderWindow &window) {
     window.draw(this->mapViewTinyRect);
     window.draw(this->mapViewAreaRect);
     window.draw(this->mapViewTileRect);
+    window.draw(this->tileSelRect);
 }
 
 void MapGenView::reGenerate(bool tiny) {
@@ -132,7 +148,7 @@ void MapGenView::reGenerate(bool tiny) {
     utils::NoiseMapBuilderSphere builder;
     builder.SetSourceModule(elev_scaler);
     builder.SetDestNoiseMap(this->worldElevMap);
-    builder.SetDestSize(tiny ? 512 : (1 * 4096), tiny ? 256 : (1 * 2048));
+    builder.SetDestSize(tiny ? 512 : worldWidthKm, tiny ? 256 : worldHeightKm);
     builder.SetBounds(-90.0, 90.0, -180.0, 180.0);
     builder.Build();
     clock_t t_end = clock();
@@ -196,52 +212,45 @@ void MapGenView::reGenerate(bool tiny) {
     fflush(stdout);
 }
 
-void MapGenView::generateTileAndArea() {
-    const auto num_tiles_x = ((4096 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
-    const auto num_tiles_y = ((2048 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+void MapGenView::generateTileOrArea() {
+    const auto num_tiles_x = ((worldWidthKm * 1000) / worldElevDistanceM) / worldTileSize;
+    const auto num_tiles_y = ((worldHeightKm * 1000) / worldElevDistanceM) / worldTileSize;
     if ((this->tileX < 0) || (this->tileX >= num_tiles_x) || (this->tileY < 0) || (this->tileY >= num_tiles_y))
         return;
     utils::NoiseMap elev_tile;
-    utils::NoiseMap elev_area;
-    const int size_tile = 512;
-    const int size_area = 512;
-    elev_tile.SetSize(size_tile, size_tile);
-    elev_area.SetSize(size_area, size_area);
-    for (int x = 0; x < size_tile; x++)
-        for (int y = 0; y < size_tile; y++) {
+    elev_tile.SetSize(worldTileSize, worldTileSize);
+    for (int x = 0; x < worldTileSize; x++)
+        for (int y = 0; y < worldTileSize; y++) {
             elev_tile.SetValue(x, y, -1);
         }
-    for (int x = 0; x < size_area; x++)
-        for (int y = 0; y < size_area; y++) {
-            elev_area.SetValue(x, y, -1);
-        }
 
-    const auto w_tile = (this->worldElevMap.GetWidth() / num_tiles_x);
-    const auto h_tile = (this->worldElevMap.GetHeight() / num_tiles_y);
-    const auto x_tile = this->tileX * w_tile;
-    const auto y_tile = this->tileY * h_tile;
-    for (int x = 0; x < size_tile; x++)
-        for (int y = 0; y < size_tile; y++) {
-            const int x_full = x_tile;
-            const int y_full = y_tile;
+    const float w_tile = (float)(this->worldElevMap.GetWidth() / num_tiles_x);
+    const float h_tile = (float)(this->worldElevMap.GetHeight() / num_tiles_y);
+    const float x_tile = (float)(this->tileX) * w_tile;
+    const float y_tile = (float)(this->tileY) * h_tile;
+    for (int x = 0; x < worldTileSize; x++) {
+        float fx = ((float)x) / ((float)worldTileSize);
+        for (int y = 0; y < worldTileSize; y++) {
+            float fy = ((float)y) / ((float)worldTileSize);
+            const float x_full = x_tile + (w_tile * fx);
+            const float y_full = y_tile + (h_tile * fy);
+            if (x == 4095 && y == 4095) {
+                printf("wt=%.1f ht=%.1f xt=%.1f yt=%.1f xf=%.1f yf=%.1f xfull=%.1f yfull=%.1f\n", w_tile, h_tile, x_tile,
+                       y_tile, fx, fy, x_full, y_full);
+                fflush(stdout);
+            }
             const float elev = this->worldElevMap.GetValue(x_full, y_full);
             elev_tile.SetValue(x, y, elev);
         }
+    }
 
     const auto out_file_path_tile = std::filesystem::absolute("../.local/temp_tile.bmp");
-    const auto out_file_path_area = std::filesystem::absolute("../.local/temp_area.bmp");
     noiseMapToBitmapFile(out_file_path_tile, elev_tile);
-    noiseMapToBitmapFile(out_file_path_area, elev_area);
 
     this->mapViewTileTex.loadFromFile(out_file_path_tile);
     this->mapViewTileRect.setTexture(&this->mapViewTileTex);
     const auto size_tex_tile = this->mapViewTileTex.getSize();
     this->mapViewTileRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_tile.x), (int)(size_tex_tile.y)});
-
-    this->mapViewAreaTex.loadFromFile(out_file_path_area);
-    this->mapViewAreaRect.setTexture(&this->mapViewAreaTex);
-    const auto size_tex_area = this->mapViewAreaTex.getSize();
-    this->mapViewAreaRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_area.x), (int)(size_tex_area.y)});
 }
 
 void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs) {

@@ -19,11 +19,12 @@ struct MapGenView : AppView {
     void onInput(const sf::Event &evt);
 
     void reGenerate(bool tiny);
-    void generateTileAndArea();
+    void generateTileOrArea();
 
     std::string seedName = "world";
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
+    sf::RectangleShape tileSelRect;
     float mouseX = -1.0;
     float mouseY = -1.0;
     int tileX = -1;
