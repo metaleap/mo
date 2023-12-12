@@ -10,11 +10,13 @@
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <string>
 
 #include "./mapgenview.h"
 #include "libnoise_utils/noiseutils.h"
 
 
+void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs);
 
 float mix(float x, float y, float a) {
     return (x * (1.0f - a)) + (y * a);
@@ -47,10 +49,10 @@ MapGenView::MapGenView() {
     this->mapViewTinyRect.setPosition(0, 0);
     this->mapViewTinyRect.setSize({1024, 512});
 
-    this->mapViewAreaRect.setPosition(1024 + 128, 0);
+    this->mapViewAreaRect.setPosition(1024 + 64, 0);
     this->mapViewAreaRect.setSize({512, 512});
 
-    this->mapViewTileRect.setPosition(1024 + 128 + 512 + 128, 0);
+    this->mapViewTileRect.setPosition(1024 + 64 + 512 + 64, 0);
     this->mapViewTileRect.setSize({512, 512});
 }
 
@@ -59,16 +61,22 @@ void MapGenView::onInput(const sf::Event &evt) {
         auto mx = (float)evt.mouseMove.x, my = (float)evt.mouseMove.y;
         const auto pos_mapview = mapViewFullRect.getPosition();
         const auto size_mapview = mapViewFullRect.getSize();
-        if ((mx >= pos_mapview.x) && (mx <= (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
-            && (my <= (pos_mapview.y + size_mapview.y))) {
+        if ((mx >= pos_mapview.x) && (mx < (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
+            && (my < (pos_mapview.y + size_mapview.y))) {
             this->mouseX = (mx - pos_mapview.x) / size_mapview.x; // 0..1
             this->mouseY = (my - pos_mapview.y) / size_mapview.y; // 0..1
+        } else {
+            this->mouseX = -1.0;
+            this->mouseY = -1.0;
         }
     }
-    if (evt.type == sf::Event::MouseButtonReleased) {
-        this->tileX = this->mouseX;
-        this->tileY = this->mouseY;
-        this->generateTileAndArea();
+    if ((evt.type == sf::Event::MouseButtonReleased)) {
+        const float num_tiles_x = ((4096 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+        const float num_tiles_y = ((2048 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+        if ((this->mouseX >= 0) && (this->mouseX < 1.0) && ((this->mouseY >= 0) && (this->mouseY < 1.0))) {
+            this->tileX = (int)(this->mouseX * (float)num_tiles_x);
+            this->tileY = (int)(this->mouseY * (float)num_tiles_y);
+        }
     }
 }
 
@@ -97,8 +105,9 @@ void MapGenView::onUpdate(const sf::Time &) {
         this->reGenerate(true);
     if (ImGui::Button("Full"))
         this->reGenerate(false);
-    ImGui::LabelText("Tile under mouse", "lon=%d · lat=%d", (int)this->mouseX, (int)this->mouseY);
-    ImGui::LabelText("Tile shown", "lon=%d · lat=%d", (int)this->tileX, (int)this->tileY);
+    ImGui::LabelText("Mouse", "x=%.2f · y=%.2f", this->mouseX, this->mouseY);
+    if (ImGui::Button((std::to_string(this->tileX) + "," + std::to_string(this->tileY)).c_str()))
+        this->generateTileAndArea();
     ImGui::End();
 }
 
@@ -123,7 +132,7 @@ void MapGenView::reGenerate(bool tiny) {
     utils::NoiseMapBuilderSphere builder;
     builder.SetSourceModule(elev_scaler);
     builder.SetDestNoiseMap(this->worldElevMap);
-    builder.SetDestSize(tiny ? 1024 : (1 * 4096), tiny ? 512 : (1 * 2048));
+    builder.SetDestSize(tiny ? 512 : (1 * 4096), tiny ? 256 : (1 * 2048));
     builder.SetBounds(-90.0, 90.0, -180.0, 180.0);
     builder.Build();
     clock_t t_end = clock();
@@ -164,35 +173,9 @@ void MapGenView::reGenerate(bool tiny) {
         fflush(stdout);
     }
 
-    utils::RendererImage renderer;
-    renderer.SetSourceNoiseMap(this->worldElevMap);
-    { // coloring
-        renderer.ClearGradient();
-        renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
-        renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
-        renderer.AddGradientPoint(-0.011, utils::Color(0, 128, 255, 255)); // shoal
-        renderer.AddGradientPoint(-0.001, utils::Color(0, 128, 255, 255)); // shoal
-        renderer.AddGradientPoint(0.000, utils::Color(128, 128, 32, 255)); // sand
-        renderer.AddGradientPoint(0.002, utils::Color(128, 160, 0, 255));  // grass
-        renderer.AddGradientPoint(0.125, utils::Color(32, 160, 0, 255));   // grass
-        renderer.AddGradientPoint(0.375, utils::Color(128, 128, 128, 255));
-        renderer.AddGradientPoint(0.750, utils::Color(160, 160, 160, 255));
-        renderer.AddGradientPoint(1.000, utils::Color(192, 192, 192, 255));
-        renderer.AddGradientPoint(1.234, utils::Color(255, 96, 0, 255));
-        renderer.EnableLight();
-        renderer.SetLightContrast(3.21);
-        renderer.SetLightBrightness(2.34);
-    }
-    utils::Image image;
-    renderer.SetDestImage(image);
-    t_start = clock();
-    renderer.Render();
-
     const auto out_file_path = std::filesystem::absolute("../.local/temp_" + std::string(tiny ? "tiny" : "full") + ".bmp");
-    utils::WriterBMP writer;
-    writer.SetSourceImage(image);
-    writer.SetDestFilename(out_file_path);
-    writer.WriteDestFile();
+    t_start = clock();
+    noiseMapToBitmapFile(out_file_path, this->worldElevMap);
     t_end = clock();
 
     if (tiny) {
@@ -214,5 +197,57 @@ void MapGenView::reGenerate(bool tiny) {
 }
 
 void MapGenView::generateTileAndArea() {
-    utils::NoiseMapBuilderPlane map_builder;
+    const float num_tiles_x = ((4096 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+    const float num_tiles_y = ((2048 /*km*/ * 1000 /*m*/) / 10) / 4096 /*tile size*/;
+    utils::NoiseMap elev_tile;
+    utils::NoiseMap elev_area;
+    const int size_tile = 512;
+    const int size_area = 512;
+    elev_tile.SetSize(size_tile, size_tile);
+    elev_area.SetSize(size_area, size_area);
+
+    const auto out_file_path_tile = std::filesystem::absolute("../.local/temp_tile.bmp");
+    const auto out_file_path_area = std::filesystem::absolute("../.local/temp_tile.bmp");
+    noiseMapToBitmapFile(out_file_path_tile, elev_tile);
+    noiseMapToBitmapFile(out_file_path_area, elev_area);
+
+    this->mapViewTileTex.loadFromFile(out_file_path_tile);
+    this->mapViewTileRect.setTexture(&this->mapViewTileTex);
+    const auto size_tex_tile = this->mapViewTileTex.getSize();
+    this->mapViewTileRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_tile.x), (int)(size_tex_tile.y)});
+
+    this->mapViewAreaTex.loadFromFile(out_file_path_area);
+    this->mapViewAreaRect.setTexture(&this->mapViewAreaTex);
+    const auto size_tex_area = this->mapViewAreaTex.getSize();
+    this->mapViewAreaRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_area.x), (int)(size_tex_area.y)});
+}
+
+void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs) {
+    utils::RendererImage renderer;
+    renderer.SetSourceNoiseMap(mapElevs);
+    { // coloring
+        renderer.ClearGradient();
+        renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
+        renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
+        renderer.AddGradientPoint(-0.011, utils::Color(0, 128, 255, 255)); // shoal
+        renderer.AddGradientPoint(-0.001, utils::Color(0, 128, 255, 255)); // shoal
+        renderer.AddGradientPoint(0.000, utils::Color(128, 128, 32, 255)); // sand
+        renderer.AddGradientPoint(0.002, utils::Color(128, 160, 0, 255));  // grass
+        renderer.AddGradientPoint(0.125, utils::Color(32, 160, 0, 255));   // grass
+        renderer.AddGradientPoint(0.375, utils::Color(128, 128, 128, 255));
+        renderer.AddGradientPoint(0.750, utils::Color(160, 160, 160, 255));
+        renderer.AddGradientPoint(1.000, utils::Color(192, 192, 192, 255));
+        renderer.AddGradientPoint(1.234, utils::Color(255, 96, 0, 255));
+        renderer.EnableLight();
+        renderer.SetLightContrast(3.21);
+        renderer.SetLightBrightness(2.34);
+    }
+    utils::Image image;
+    renderer.SetDestImage(image);
+    renderer.Render();
+
+    utils::WriterBMP writer;
+    writer.SetSourceImage(image);
+    writer.SetDestFilename(outFilePath);
+    writer.WriteDestFile();
 }

@@ -21,13 +21,13 @@ struct MapGenView : AppView {
     void reGenerate(bool tiny);
     void generateTileAndArea();
 
-    std::string seedName = "foobar";
+    std::string seedName = "world";
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
     float mouseX = -1.0;
     float mouseY = -1.0;
-    float tileX = -1.0;
-    float tileY = -1.0;
+    int tileX = -1;
+    int tileY = -1;
     sf::RectangleShape mapViewTinyRect;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
