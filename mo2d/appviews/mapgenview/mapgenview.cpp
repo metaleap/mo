@@ -30,7 +30,7 @@ MapGenView::MapGenView() {
     this->previewFullRect.setSize({3072, 1536});
     this->previewTinyRect.setOrigin(0, 0);
     this->previewFullRect.setOrigin(0, 0);
-    this->previewTinyRect.setPosition(768, 0);
+    this->previewTinyRect.setPosition(0, 0);
     this->previewFullRect.setPosition(0, 624);
     this->previewTinyRect.setFillColor(sf::Color::White);
     this->previewFullRect.setFillColor(sf::Color::White);
@@ -80,17 +80,18 @@ void MapGenView::reGenerate(bool tiny) {
 
     module::ScaleBias scaler;
     scaler.SetSourceModule(0, perlinNoise);
-    scaler.SetScale(0.7);
+    scaler.SetScale(0.4);
 
     {
         utils::NoiseMap heightMap;
         utils::NoiseMapBuilderSphere heightMapBuilder;
         heightMapBuilder.SetSourceModule(scaler);
         heightMapBuilder.SetDestNoiseMap(heightMap);
-        heightMapBuilder.SetDestSize(tiny ? 512 : 4096, tiny ? 256 : 2048);
+        heightMapBuilder.SetDestSize(tiny ? 1024 : 4096, tiny ? 512 : 2048);
         heightMapBuilder.SetBounds(-90.0, 90.0, -180.0, 180.0);
         heightMapBuilder.Build();
         clock_t t_end = clock();
+        // ensure full ocean-ness at northern and southern map borders
         for (int y = 0, h = heightMap.GetHeight(), y_h = h / 8; y < y_h; y++) {
             const float weight = sqrt(sqrt(((float)y / (float)y_h))); // (0 -> force ocean) .. (1 -> keep as-is)
             for (int x = 0, w = heightMap.GetWidth(); x < w; x++) {
@@ -100,19 +101,37 @@ void MapGenView::reGenerate(bool tiny) {
                 heightMap.SetValue(x, h - y, mix(-1, value, weight));
             }
         }
+        // re-scale from actual mins and maxes to true -1..1 with exact 0 remaining equal
         if (!tiny) {
-            for (int w = heightMap.GetWidth(), x = 0, h = heightMap.GetHeight(); x < w; x++)
-                for (int y = 0; y < h; y++)
+            float height_max = -3.21f, height_min = 3.21f;
+            float height_max_new = -3.21f, height_min_new = 3.21f;
+            for (int w = heightMap.GetWidth(), h = heightMap.GetHeight(), x = 0; x < w; x++)
+                for (int y = 0; y < h; y++) {
+                    const auto height = heightMap.GetValue(x, y);
+                    height_max = std::max(height_max, height);
+                    height_min = std::min(height_min, height);
+                }
+            const float scale_factor_below = -0.98765431f / height_min; // vs -1.0 this _does_ make THE difference
+            const float scale_factor_above = 0.98765431f / height_max;  // for the extreme outlier cases
+            for (int w = heightMap.GetWidth(), h = heightMap.GetHeight(), x = 0; x < w; x++)
+                for (int y = 0; y < h; y++) { // planet of love
+                    float height = heightMap.GetValue(x, y);
+                    height = height * ((height < 0) ? scale_factor_below : scale_factor_above);
+                    height_max_new = std::max(height_max_new, height);
+                    height_min_new = std::min(height_min_new, height);
+                    heightMap.SetValue(x, y, height);
                     if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
                         heightMap.SetValue(x, y, 1.234f);
-            printf("heights done: %fsec\n", (float)(t_end - t_start) / CLOCKS_PER_SEC);
+                }
+            printf("heights done: min=%f->%f,max=%f->%f, %fsec\n", height_min, height_min_new, height_max, height_max_new,
+                   (float)(t_end - t_start) / CLOCKS_PER_SEC);
         }
 
         utils::RendererImage renderer;
         renderer.SetSourceNoiseMap(heightMap);
         { // coloring
             renderer.ClearGradient();
-            renderer.AddGradientPoint(-1.111, utils::Color(0, 0, 128, 255));   // very-deeps
+            renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
             renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
             renderer.AddGradientPoint(-0.011, utils::Color(0, 128, 255, 255)); // shoal
             renderer.AddGradientPoint(-0.001, utils::Color(0, 128, 255, 255)); // shoal
@@ -120,9 +139,9 @@ void MapGenView::reGenerate(bool tiny) {
             renderer.AddGradientPoint(0.002, utils::Color(128, 160, 0, 255));  // grass
             renderer.AddGradientPoint(0.125, utils::Color(32, 160, 0, 255));   // grass
             renderer.AddGradientPoint(0.375, utils::Color(128, 128, 128, 255));
-            renderer.AddGradientPoint(0.750, utils::Color(196, 196, 196, 255));
-            renderer.AddGradientPoint(1.111, utils::Color(244, 244, 244, 255));
-            renderer.AddGradientPoint(1.234, utils::Color(255, 128, 0, 255));
+            renderer.AddGradientPoint(0.750, utils::Color(160, 160, 160, 255));
+            renderer.AddGradientPoint(1.000, utils::Color(192, 192, 192, 255));
+            renderer.AddGradientPoint(1.234, utils::Color(255, 96, 0, 255));
             renderer.EnableLight();
             renderer.SetLightContrast(3.21);
             renderer.SetLightBrightness(2.34);
