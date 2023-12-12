@@ -1,14 +1,16 @@
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <filesystem>
+#include <functional>
 #include <map>
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 #include "./libnoise_utils/noiseutils.h"
 
 #include "./mapgenview.h"
-#include "perlin.h"
-#include "scalebias.h"
 
 
 
@@ -22,8 +24,7 @@ MapGenView::MapGenView() {
     this->perlinNoise.SetOctaveCount(30);
     this->perlinNoise.SetSeed(12);
     this->perlinNoise.SetPersistence(0.515);
-    this->finalTerrain.SetBounds(-1000, 10); // full perlin range is "usually but not guaranteed always" -1..1
-    // this->finalTerrain.SetEdgeFalloff(0.11);
+    this->perlinNoise.SetFrequency(1.221);
 
     this->previewTinyRect.setSize({1024, 512});
     this->previewFullRect.setSize({3072, 1536});
@@ -33,14 +34,24 @@ MapGenView::MapGenView() {
     this->previewFullRect.setPosition(0, 624);
     this->previewTinyRect.setFillColor(sf::Color::White);
     this->previewFullRect.setFillColor(sf::Color::White);
+
+    this->previewFullTex.setSmooth(true);
+    this->previewFullTex.setRepeated(false);
+    this->previewTinyTex.setSmooth(true);
+    this->previewTinyTex.setRepeated(false);
 }
 
 void MapGenView::onUpdate(sf::Time) {
     ImGui::Begin("MapGen");
     {
-        int seed = perlinNoise.GetSeed();
-        if (ImGui::InputInt("Seed", &seed))
-            perlinNoise.SetSeed(seed);
+        if (ImGui::InputText("Map Name", &this->seedName)) {
+            std::transform(this->seedName.begin(), this->seedName.end(), this->seedName.begin(), tolower);
+            auto upper = std::string(this->seedName);
+            std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
+            std::hash<std::string> hasher;
+            auto hash = hasher(this->seedName + upper);
+            this->perlinNoise.SetSeed((int)hash);
+        }
         float gappiness = (float)(perlinNoise.GetLacunarity());
         if (ImGui::InputFloat("Lacunarity (Gappiness)", &gappiness))
             perlinNoise.SetLacunarity(gappiness);
@@ -67,34 +78,17 @@ void MapGenView::reGenerate(bool tiny) {
     clock_t t_start = clock();
     perlinNoise.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
 
-    module::RidgedMulti ridged;
-    ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
-    ridged.SetFrequency(perlinNoise.GetFrequency());
-    ridged.SetLacunarity(perlinNoise.GetLacunarity());
-    ridged.SetOctaveCount(perlinNoise.GetOctaveCount());
-    ridged.SetSeed(perlinNoise.GetSeed());
-
-    this->finalTerrain.SetSourceModule(0, ridged);
-    this->finalTerrain.SetSourceModule(1, perlinNoise);
-    this->finalTerrain.SetControlModule(perlinNoise);
-
     module::ScaleBias scaler;
     scaler.SetSourceModule(0, perlinNoise);
     scaler.SetScale(0.7);
 
-    for (const auto &is_tile : std::map<bool, bool> {{true, true}, {false, false}}) {
-        if (is_tile.first)
-            continue;
+    {
         utils::NoiseMap heightMap;
         utils::NoiseMapBuilderSphere heightMapBuilder;
         heightMapBuilder.SetSourceModule(scaler);
         heightMapBuilder.SetDestNoiseMap(heightMap);
-        heightMapBuilder.SetDestSize(tiny ? 512 : 2048, tiny ? 256 : 1024);
+        heightMapBuilder.SetDestSize(tiny ? 512 : 4096, tiny ? 256 : 2048);
         heightMapBuilder.SetBounds(-90.0, 90.0, -180.0, 180.0);
-        if (is_tile.first) {
-            heightMapBuilder.SetDestSize(2048, 2048);
-            heightMapBuilder.SetBounds(-1, 0, -1, 0);
-        }
         heightMapBuilder.Build();
         clock_t t_end = clock();
         for (int y = 0, h = heightMap.GetHeight(), y_h = h / 8; y < y_h; y++) {
@@ -106,15 +100,13 @@ void MapGenView::reGenerate(bool tiny) {
                 heightMap.SetValue(x, h - y, mix(-1, value, weight));
             }
         }
-        float max = -1;
-        if (!tiny)
-            for (int x = 0, w = heightMap.GetWidth(); x < w; x++)
-                for (int y = 0, h = heightMap.GetWidth(); y < h; y++) {
-                    const float value = heightMap.GetValue(x, y);
-                    if (value > max)
-                        max = value;
-                }
-        printf("heights done: max=%f, %fsec\n", max, (float)(t_end - t_start) / CLOCKS_PER_SEC);
+        if (!tiny) {
+            for (int w = heightMap.GetWidth(), x = 0, h = heightMap.GetHeight(); x < w; x++)
+                for (int y = 0; y < h; y++)
+                    if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
+                        heightMap.SetValue(x, y, 1.234f);
+            printf("heights done: %fsec\n", (float)(t_end - t_start) / CLOCKS_PER_SEC);
+        }
 
         utils::RendererImage renderer;
         renderer.SetSourceNoiseMap(heightMap);
@@ -130,6 +122,7 @@ void MapGenView::reGenerate(bool tiny) {
             renderer.AddGradientPoint(0.375, utils::Color(128, 128, 128, 255));
             renderer.AddGradientPoint(0.750, utils::Color(196, 196, 196, 255));
             renderer.AddGradientPoint(1.111, utils::Color(244, 244, 244, 255));
+            renderer.AddGradientPoint(1.234, utils::Color(255, 128, 0, 255));
             renderer.EnableLight();
             renderer.SetLightContrast(3.21);
             renderer.SetLightBrightness(2.34);
@@ -139,8 +132,8 @@ void MapGenView::reGenerate(bool tiny) {
         t_start = clock();
         renderer.Render();
 
-        const auto out_file_path = std::filesystem::absolute(
-            "../.local/temp_" + std::string(tiny ? "tiny" : (is_tile.first ? "tile" : "full")) + ".bmp");
+        const auto out_file_path =
+            std::filesystem::absolute("../.local/temp_" + std::string(tiny ? "tiny" : "full") + ".bmp");
         utils::WriterBMP writer;
         writer.SetSourceImage(image);
         writer.SetDestFilename(out_file_path);
@@ -152,7 +145,7 @@ void MapGenView::reGenerate(bool tiny) {
             this->previewTinyRect.setTexture(&this->previewTinyTex);
             const auto size_tex = this->previewTinyTex.getSize();
             this->previewTinyRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
-        } else if (!is_tile.first) {
+        } else {
             this->previewFullTex.loadFromFile(out_file_path);
             this->previewFullRect.setTexture(&this->previewFullTex);
             const auto size_tex = this->previewFullTex.getSize();
