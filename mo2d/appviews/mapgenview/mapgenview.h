@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 
 #include <noise.h>
@@ -25,6 +26,7 @@ struct MapGenView : AppView {
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
     sf::RectangleShape tileSelRect;
+    sf::Vector2i numTiles;
     float mouseX = -1.0;
     float mouseY = -1.0;
     int tileX = -1;
