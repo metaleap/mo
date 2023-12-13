@@ -272,20 +272,31 @@ void MapGenView::reGenerate(bool tiny) {
     fflush(stdout);
 }
 
-void mapTileElevsDiamondSquare(int xTl, int yTl, int xTr, int yTr, int xBl, int yBl, int xBr, int yBr) {
-    const float elev_tl = elevs_stash[xTl][yTl], elev_tr = elevs_stash[xTr][yTr], elev_bl = elevs_stash[xBl][yBl],
-                elev_br = elevs_stash[xBr][yBr];
-    const int idx_mid_x = xTl + ((xTr - xTl) / 2), idx_mid_y = yTl + ((yBl - yTl) / 2);
-    if ((idx_mid_x == xTl) || (idx_mid_x == xTr) || (idx_mid_y == yTl) || (idx_mid_y == yBl))
+void mapTileElevsDiamondSquare(int xL, int xR, int yT, int yB) {
+    const float elev_tl = elevs_stash[xL][yT], elev_tr = elevs_stash[xR][yT], elev_bl = elevs_stash[xL][yB],
+                elev_br = elevs_stash[xR][yB];
+
+    const int idx_mid_x = xL + ((xR - xL) / 2), idx_mid_y = yT + ((yB - yT) / 2);
+    if ((idx_mid_x == xL) || (idx_mid_x == xR) || (idx_mid_y == yT) || (idx_mid_y == yB))
         return;
     const float elev_mid = (elev_tl + elev_tr + elev_bl + elev_br) / 4.0f;
     elevs_stash[idx_mid_x][idx_mid_y] = elev_mid;
 
-    // const float elev_ml = (elev_mid + elev_tl + elev_bl) / 3.0f;
-    // const float elev_mb = (elev_mid + elev_bl + elev_br) / 3.0f;
-    // const float elev_mt = (elev_mid + elev_tl + elev_tr) / 3.0f;
-    // const float elev_mr = (elev_mid + elev_tr + elev_br) / 3.0f;
+    const float elev_ml = (elev_mid + elev_tl + elev_bl) / 3.0f;
+    elevs_stash[xL][idx_mid_y] = elev_ml;
+    const float elev_mb = (elev_mid + elev_bl + elev_br) / 3.0f;
+    elevs_stash[idx_mid_x][yB] = elev_mb;
+    const float elev_mt = (elev_mid + elev_tl + elev_tr) / 3.0f;
+    elevs_stash[idx_mid_x][yT] = elev_mt;
+    const float elev_mr = (elev_mid + elev_tr + elev_br) / 3.0f;
+    elevs_stash[xR][idx_mid_y] = elev_mr;
+
+    mapTileElevsDiamondSquare(xL, idx_mid_x, yT, idx_mid_y); // tl sq
+    mapTileElevsDiamondSquare(idx_mid_x, xR, yT, idx_mid_y); // tr sq
+    mapTileElevsDiamondSquare(xL, idx_mid_x, idx_mid_y, yB); // bl sq
+    mapTileElevsDiamondSquare(idx_mid_x, xR, idx_mid_y, yB); // br sq
 }
+
 
 void MapGenView::generateTile() {
     if ((this->tileX < 0) || (this->tileX >= mapNumTilesX) || (this->tileY < 0) || (this->tileY >= mapNumTilesY))
@@ -294,15 +305,22 @@ void MapGenView::generateTile() {
     utils::NoiseMap elev_tile;
     elev_tile.SetSize(mapTileSize, mapTileSize);
 
+    for (int x = 0; x < mapTileSize; x++)
+        for (int y = 0; y < mapTileSize; y++)
+            elevs_stash[x][y] = 1.234f;
     for (int x_in_map = this->tileX * 4, x = x_in_map; x <= x_in_map + 4; x++) {
         for (int y_in_map = this->tileY * 4, y = y_in_map; y <= y_in_map + 4; y++) {
             const float elev = this->worldElevMap.GetValue((x == mapWidth) ? 0 : x, (y == mapHeight) ? 0 : y);
-            const int x_in_tile = (x - x_in_map) * 1024;
-            const int y_in_tile = (y - y_in_map) * 1024;
+            const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
             elevs_stash[x_in_tile][y_in_tile] = elev;
+        }
+    }
+    for (int x_in_map = this->tileX * 4, x = x_in_map + 4; x >= 0; x--) {
+        for (int y_in_map = this->tileY * 4, y = y_in_map + 4; y >= 0; y--) {
+            const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
             const int x_prev = x_in_tile - 1024, y_prev = y_in_tile - 1024;
             if ((x_prev >= 0) && (y_prev >= 0))
-                mapTileElevsDiamondSquare(x_prev, y_prev, x_in_tile, y_prev, x_prev, y_in_tile, x_in_tile, y_in_tile);
+                mapTileElevsDiamondSquare(x_prev, x_in_tile, y_prev, y_in_tile);
         }
     }
 
