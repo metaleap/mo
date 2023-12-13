@@ -20,10 +20,10 @@ struct MapGenView : AppView {
     void onInput(const sf::Event &evt);
 
     void reGenerate(bool tiny);
-    void generateTileOrArea();
+    void generateTile();
     void prepTileableLayer(module::Module &module, utils::NoiseMap &intoMap, std::string outFilePath);
 
-    std::string seedName = "world";
+    std::string seedName = "foo bar";
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
     utils::NoiseMap repRidged;
@@ -40,6 +40,4 @@ struct MapGenView : AppView {
     sf::Texture mapViewFullTex;
     sf::RectangleShape mapViewTileRect;
     sf::Texture mapViewTileTex;
-    sf::RectangleShape mapViewAreaRect;
-    sf::Texture mapViewAreaTex;
 };

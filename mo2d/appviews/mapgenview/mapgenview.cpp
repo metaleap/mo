@@ -71,7 +71,6 @@ MapGenView::MapGenView() {
              {&this->mapViewTinyTex, &this->mapViewTinyRect},
              {&this->mapViewFullTex, &this->mapViewFullRect},
              {&this->mapViewTileTex, &this->mapViewTileRect},
-             {&this->mapViewAreaTex, &this->mapViewAreaRect},
          }) {
         rect_and_tex.second->setOrigin(0, 0);
         rect_and_tex.second->setFillColor(sf::Color::White);
@@ -86,10 +85,7 @@ MapGenView::MapGenView() {
     this->mapViewTinyRect.setPosition(0, 0);
     this->mapViewTinyRect.setSize({1024, 512});
 
-    this->mapViewAreaRect.setPosition(1024 + 64, 0);
-    this->mapViewAreaRect.setSize({512, 512});
-
-    this->mapViewTileRect.setPosition(1024 + 64 + 512 + 64, 0);
+    this->mapViewTileRect.setPosition(1024 + 64, 0);
     this->mapViewTileRect.setSize({512, 512});
 
     {
@@ -169,28 +165,28 @@ void MapGenView::onUpdate(const sf::Time &) {
         this->reGenerate(false);
     ImGui::LabelText("Mouse", "x=%.2f , y=%.2f", this->mouseX, this->mouseY);
     if (ImGui::Button((std::to_string(this->tileX) + "," + std::to_string(this->tileY)).c_str()))
-        this->generateTileOrArea();
+        this->generateTile();
     ImGui::End();
 }
 
 void MapGenView::onRender(sf::RenderWindow &window) {
     window.draw(this->mapViewFullRect);
     window.draw(this->mapViewTinyRect);
-    window.draw(this->mapViewAreaRect);
     window.draw(this->mapViewTileRect);
     window.draw(this->tileSelRect);
 }
 
 void MapGenView::reGenerate(bool tiny) {
-    auto lower = std::string(this->seedName);
+    auto ascii = std::string(this->seedName);
+    std::transform(ascii.begin(), ascii.end(), ascii.begin(), toascii);
+    auto lower = std::string(ascii);
     std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
     auto upper = std::string(lower);
     std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
     std::hash<std::string> hasher;
-    auto hash = hasher(lower + upper);
+    auto hash = hasher(upper + lower);
     this->worldElevGen.SetSeed((int)hash);
 
-    this->mapViewAreaRect.setTexture(nullptr);
     this->mapViewTileRect.setTexture(nullptr);
     this->tileY = -1.0;
     this->tileY = -1.0;
@@ -228,16 +224,16 @@ void MapGenView::reGenerate(bool tiny) {
                 height_min = std::min(height_min, height);
             }
         const float scale_factor_below = -0.987654321f / height_min;
-        const float scale_factor_above = 0.7f / height_max;
+        const float scale_factor_above = 0.6f / height_max;
         for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
             for (int y = 0; y < h; y++) { //
 
                 float elev = this->worldElevMap.GetValue(x, y);
                 elev = elev * ((elev < 0) ? scale_factor_below : scale_factor_above);
-                const float ridged = 0.3f * this->repRidged.GetValue(x, y);
-                const float billow = 0.3f * this->repBillow.GetValue(x, y);
+                const float ridged = 0.4f * this->repRidged.GetValue(x, y);
+                const float billow = 0.4f * this->repBillow.GetValue(x, y);
                 if (elev >= -0.01f)
-                    elev = elev + mix(billow, ridged, elev * 2.0f);
+                    elev = elev + mix(billow, ridged, elev + 0.4f);
                 height_max_new = std::max(height_max_new, elev);
                 height_min_new = std::min(height_min_new, elev);
                 this->worldElevMap.SetValue(x, y, elev);
@@ -274,7 +270,7 @@ void MapGenView::reGenerate(bool tiny) {
     fflush(stdout);
 }
 
-void MapGenView::generateTileOrArea() {
+void MapGenView::generateTile() {
     if ((this->tileX < 0) || (this->tileX >= this->numTiles.x) || (this->tileY < 0) || (this->tileY >= this->numTiles.y))
         return;
     utils::NoiseMap elev_tile;
@@ -356,9 +352,9 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
     if (!bw0To1) { // coloring
         renderer.ClearGradient();
         renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
-        renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
-        renderer.AddGradientPoint(-0.011, utils::Color(0, 128, 255, 255)); // shoal
-        renderer.AddGradientPoint(-0.001, utils::Color(0, 128, 255, 255)); // shoal
+        renderer.AddGradientPoint(-0.222, utils::Color(0, 0, 255, 255));   // water
+        renderer.AddGradientPoint(-0.022, utils::Color(0, 96, 255, 255));  // shoal
+        renderer.AddGradientPoint(-0.002, utils::Color(0, 128, 255, 255)); // shoal
         renderer.AddGradientPoint(0.000, utils::Color(128, 128, 32, 255)); // sand
         renderer.AddGradientPoint(0.002, utils::Color(128, 160, 0, 255));  // grass
         renderer.AddGradientPoint(0.125, utils::Color(32, 160, 0, 255));   // grass
