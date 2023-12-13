@@ -316,8 +316,14 @@ void MapGenView::generateTile() {
                                 + interpWeight(x_weight, y_weight) * elev_br;
         }
     for (int x = 0; x < mapTileSize; x++)
-        for (int y = 0; y < mapTileSize; y++)
-            elev_tile.SetValue(x, y, elevs_stash[x][y]);
+        for (int y = 0; y < mapTileSize; y++) {
+            const float ridged = this->repRidged.GetValue(x, y);
+            const float billow = this->repBillow.GetValue(x, y);
+            float elev = elevs_stash[x][y];
+            float elev_modulate = mix(billow, ridged, 0.333f) - 0.5f;
+            elev += (elev_modulate * 0.01f);
+            elev_tile.SetValue(x, y, std::clamp(elev, -1.0f, 1.0f));
+        }
 
     const auto out_file_path_col = std::filesystem::absolute("../.local/temp_tile_col.bmp");
     const auto out_file_path_bw = std::filesystem::absolute("../.local/temp_tile_bw.bmp");
