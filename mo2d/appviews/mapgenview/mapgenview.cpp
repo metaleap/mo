@@ -226,15 +226,22 @@ void MapGenView::reGenerate(bool tiny) {
                 height_max = std::max(height_max, height);
                 height_min = std::min(height_min, height);
             }
-        const float scale_factor_below = -0.98765431f / height_min; // vs -1.0 this _does_ make THE difference
-        const float scale_factor_above = 0.98765431f / height_max;  // for the extreme outlier cases
+        const float scale_factor_below = -0.5f / height_min;
+        const float scale_factor_above = 0.5f / height_max;
         for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
             for (int y = 0; y < h; y++) { // planet of love
-                float height = this->worldElevMap.GetValue(x, y);
-                height = height * ((height < 0) ? scale_factor_below : scale_factor_above);
-                height_max_new = std::max(height_max_new, height);
-                height_min_new = std::min(height_min_new, height);
-                this->worldElevMap.SetValue(x, y, height);
+                float elev = this->worldElevMap.GetValue(x, y);
+                elev = elev * ((elev < 0) ? scale_factor_below : scale_factor_above);
+                const float ridged = 0.5f * this->repRidged.GetValue(x, y);
+                const float billow = 0.5f * this->repBillow.GetValue(x, y);
+                if (elev > 0)
+                    elev = elev + mix(billow, ridged, elev * 2.0f);
+
+                height_max_new = std::max(height_max_new, elev);
+                height_min_new = std::min(height_min_new, elev);
+                this->worldElevMap.SetValue(x, y, elev);
+
+                // clim-zone divider lines (for visualization purposes only)
                 if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
                     this->worldElevMap.SetValue(x, y, 1.234f);
             }
@@ -378,13 +385,15 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
 
 void noiseMapFromBitmapFileBw(utils::NoiseMap* dest, sf::Image* imgBw) {
     const auto size_img = imgBw->getSize();
-    int y_map = 0;
-    for (uint x = 0; x < size_img.x; x++) {
-        for (uint y = size_img.y - 1; y >= 0; y--) {
-            const auto bw = imgBw->getPixel(x, y);
-            const float elev = ((float)bw.r) / 255.0f;
+    dest->SetSize(worldTileSize, worldTileSize);
+    int y_map = worldTileSize - 1;
+    for (uint y = 0; y < size_img.y; y++) {
+        for (uint x = 0; x < size_img.x; x++) {
+            const auto bw_rgb = imgBw->getPixel(x, y);
+            const auto bw = (((float)bw_rgb.r) + ((float)bw_rgb.g) + ((float)bw_rgb.b)) / 3.0f;
+            const float elev = bw / 255.0f;
             dest->SetValue(x, y_map, elev);
         }
-        y_map++;
+        y_map--;
     }
 }
