@@ -110,7 +110,7 @@ MapGenView::MapGenView() {
             noiseMapFromBitmapFileBw(&this->repRidged, &img);
         else {
             noise::module::RidgedMulti ridged;
-            ridged.SetFrequency(0.0044);
+            ridged.SetFrequency(0.005);
             ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
             ridged.SetSeed(worldElevGen.GetSeed());
             this->prepTileableLayer(ridged, this->repRidged, bmpFilePath);
@@ -224,16 +224,16 @@ void MapGenView::reGenerate(bool tiny) {
                 height_min = std::min(height_min, height);
             }
         const float scale_factor_below = -0.987654321f / height_min;
-        const float scale_factor_above = 0.6f / height_max;
+        const float scale_factor_above = 0.55f / height_max;
         for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
-            for (int y = 0; y < h; y++) { //
-
+            for (int y = 0; y < h; y++) {
                 float elev = this->worldElevMap.GetValue(x, y);
                 elev = elev * ((elev < 0) ? scale_factor_below : scale_factor_above);
-                const float ridged = 0.4f * this->repRidged.GetValue(x, y);
-                const float billow = 0.4f * this->repBillow.GetValue(x, y);
-                if (elev >= -0.01f)
-                    elev = elev + mix(billow, ridged, elev + 0.4f);
+                const float ridged = 0.44f * this->repRidged.GetValue(x, y);
+                const float billow = 0.44f * this->repBillow.GetValue(x, y);
+
+                float elev_m = elev * 1000.0f;
+                elev = elev + mix(0.0f, mix(billow, ridged, elev + 0.44f), std::clamp(elev_m, 0.0f, 1.0f));
                 height_max_new = std::max(height_max_new, elev);
                 height_min_new = std::min(height_min_new, elev);
                 this->worldElevMap.SetValue(x, y, elev);
