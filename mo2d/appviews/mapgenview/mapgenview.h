@@ -23,7 +23,7 @@ struct MapGenView : AppView {
     void generateTile();
     void prepTileableLayer(module::Module &module, utils::NoiseMap &intoMap, std::string outFilePath);
 
-    std::string seedName = "foo bar";
+    std::string seedName = "foobar";
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
     utils::NoiseMap repRidged;

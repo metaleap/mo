@@ -239,8 +239,8 @@ void MapGenView::reGenerate(bool tiny) {
                 this->worldElevMap.SetValue(x, y, elev);
 
                 // clim-zone divider lines (for visualization purposes only)
-                if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
-                    this->worldElevMap.SetValue(x, y, 1.234f);
+                // if (((y % (h / 8)) == 0) && (((x / 128) % 2) == 0))
+                //     this->worldElevMap.SetValue(x, y, 1.234f);
             }
         printf("heights done: min=%f->%f,max=%f->%f, %fsec\n", height_min, height_min_new, height_max, height_max_new,
                (float)(t_end - t_start) / CLOCKS_PER_SEC);
