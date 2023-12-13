@@ -100,7 +100,7 @@ MapGenView::MapGenView() {
             billow.SetLacunarity(0.1 * worldElevGen.GetLacunarity());
             billow.SetPersistence(0.1 * worldElevGen.GetPersistence());
             billow.SetSeed(worldElevGen.GetSeed());
-            this->prepTileableLayer(billow, this->repBillow, bmpFilePath);
+            this->prepTileableLayer(billow, this->repBillow, billow.GetFrequency(), bmpFilePath);
         }
     }
     {
@@ -110,10 +110,10 @@ MapGenView::MapGenView() {
             noiseMapFromBitmapFileBw(&this->repRidged, &img);
         else {
             noise::module::RidgedMulti ridged;
-            ridged.SetFrequency(0.005);
+            ridged.SetFrequency(0.0044);
             ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
             ridged.SetSeed(worldElevGen.GetSeed());
-            this->prepTileableLayer(ridged, this->repRidged, bmpFilePath);
+            this->prepTileableLayer(ridged, this->repRidged, ridged.GetFrequency(), bmpFilePath);
         }
     }
 }
@@ -309,15 +309,16 @@ void MapGenView::generateTile() {
     fflush(stdout);
 }
 
-void MapGenView::prepTileableLayer(module::Module &module, utils::NoiseMap &destMap, std::string outFilePath) {
+void MapGenView::prepTileableLayer(module::Module &module, utils::NoiseMap &destMap, double srcFreq,
+                                   std::string outFilePath) {
     utils::NoiseMapBuilderPlane builder;
     builder.SetDestNoiseMap(destMap);
     builder.SetDestSize(worldTileSize, worldTileSize);
     builder.SetBounds(0, worldTileSize, 0, worldTileSize);
     noise::module::Turbulence turb;
     turb.SetSourceModule(0, module);
-    turb.SetPower(1);
-    turb.SetFrequency(4.0);
+    turb.SetFrequency(4.0 * srcFreq);
+    turb.SetPower(1.0 / turb.GetFrequency());
     turb.SetSeed(worldElevGen.GetSeed());
     builder.SetSourceModule(turb);
     builder.EnableSeamless(true);
