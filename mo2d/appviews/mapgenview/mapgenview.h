@@ -32,8 +32,8 @@ struct MapGenView : AppView {
     sf::RectangleShape tileSelRect;
     float mouseX = -1.0;
     float mouseY = -1.0;
-    int tileX = -1;
-    int tileY = -1;
+    int tileX = 240;
+    int tileY = 265;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
     sf::Texture mapViewFullTex;

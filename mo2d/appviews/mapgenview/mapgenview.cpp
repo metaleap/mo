@@ -1,7 +1,9 @@
+#include <cstdlib>
 #include <filesystem>
 #include <map>
 
 #include <imgui.h>
+#include <math.h>
 #include <misc/cpp/imgui_stdlib.h>
 
 #include <SFML/Graphics/Image.hpp>
@@ -11,6 +13,7 @@
 
 #include "./mapgenview.h"
 #include "libnoise_utils/noiseutils.h"
+
 
 const int mapWidth = 4096;    // in meters: 4096 * 1024 meters
 const int mapHeight = 2048;   // in meters: 2048 * 1024 meters
@@ -48,7 +51,6 @@ MapGenView::MapGenView() {
     this->worldElevGen.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
     this->worldElevGen.SetLacunarity(2.121);
     this->worldElevGen.SetOctaveCount(30);
-    this->worldElevGen.SetSeed(12);
     this->worldElevGen.SetPersistence(0.515);
     this->worldElevGen.SetFrequency(1.212);
     this->tileSelRect.setFillColor(sf::Color(255, 255, 255, 64));
@@ -160,6 +162,12 @@ void MapGenView::onUpdate(const sf::Time &) {
     if (ImGui::Button("Full"))
         this->reGenerate(false);
     ImGui::LabelText("Mouse", "x,y=%.2f,%.2f", this->mouseX, this->mouseY);
+
+    int xy[2] {this->tileX, this->tileY};
+    if (ImGui::InputInt2("const char *label", xy)) {
+        this->tileX = xy[0];
+        this->tileY = xy[1];
+    }
     if (ImGui::Button((std::to_string(this->tileX) + "," + std::to_string(this->tileY)).c_str()))
         this->generateTile();
     ImGui::End();
@@ -187,10 +195,12 @@ void MapGenView::reGenerate(bool tiny) {
     auto hash = hasher(upper + lower);
     this->worldElevGen.SetSeed((int)hash);
     srand(hash);
+    srand48(hash);
+    seed48((ushort*)(&hash));
 
     this->mapViewTileColRect.setTexture(nullptr);
     this->mapViewTileBwRect.setTexture(nullptr);
-    this->tileY = -1.0;
+    this->tileX = -1.0;
     this->tileY = -1.0;
 
     clock_t t_start = clock();
@@ -272,32 +282,6 @@ void MapGenView::reGenerate(bool tiny) {
     fflush(stdout);
 }
 
-void mapTileElevsDiamondSquare(int xL, int xR, int yT, int yB) {
-    const float elev_tl = elevs_stash[xL][yT], elev_tr = elevs_stash[xR][yT], elev_bl = elevs_stash[xL][yB],
-                elev_br = elevs_stash[xR][yB];
-
-    const int idx_mid_x = xL + ((xR - xL) / 2), idx_mid_y = yT + ((yB - yT) / 2);
-    if ((idx_mid_x == xL) || (idx_mid_x == xR) || (idx_mid_y == yT) || (idx_mid_y == yB))
-        return;
-    const float elev_mid = (elev_tl + elev_tr + elev_bl + elev_br) / 4.0f;
-    elevs_stash[idx_mid_x][idx_mid_y] = elev_mid;
-
-    const float elev_ml = (elev_mid + elev_tl + elev_bl) / 3.0f;
-    elevs_stash[xL][idx_mid_y] = elev_ml;
-    const float elev_mb = (elev_mid + elev_bl + elev_br) / 3.0f;
-    elevs_stash[idx_mid_x][yB] = elev_mb;
-    const float elev_mt = (elev_mid + elev_tl + elev_tr) / 3.0f;
-    elevs_stash[idx_mid_x][yT] = elev_mt;
-    const float elev_mr = (elev_mid + elev_tr + elev_br) / 3.0f;
-    elevs_stash[xR][idx_mid_y] = elev_mr;
-
-    mapTileElevsDiamondSquare(xL, idx_mid_x, yT, idx_mid_y); // tl sq
-    mapTileElevsDiamondSquare(idx_mid_x, xR, yT, idx_mid_y); // tr sq
-    mapTileElevsDiamondSquare(xL, idx_mid_x, idx_mid_y, yB); // bl sq
-    mapTileElevsDiamondSquare(idx_mid_x, xR, idx_mid_y, yB); // br sq
-}
-
-
 void MapGenView::generateTile() {
     if ((this->tileX < 0) || (this->tileX >= mapNumTilesX) || (this->tileY < 0) || (this->tileY >= mapNumTilesY))
         return;
@@ -305,22 +289,43 @@ void MapGenView::generateTile() {
     utils::NoiseMap elev_tile;
     elev_tile.SetSize(mapTileSize, mapTileSize);
 
-    for (int x = 0; x < mapTileSize; x++)
-        for (int y = 0; y < mapTileSize; y++)
-            elevs_stash[x][y] = 1.234f;
-    for (int x_in_map = this->tileX * 4, x = x_in_map; x <= x_in_map + 4; x++) {
-        for (int y_in_map = this->tileY * 4, y = y_in_map; y <= y_in_map + 4; y++) {
-            const float elev = this->worldElevMap.GetValue((x == mapWidth) ? 0 : x, (y == mapHeight) ? 0 : y);
-            const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
-            elevs_stash[x_in_tile][y_in_tile] = elev;
-        }
-    }
-    for (int x_in_map = this->tileX * 4, x = x_in_map + 4; x >= 0; x--) {
-        for (int y_in_map = this->tileY * 4, y = y_in_map + 4; y >= 0; y--) {
-            const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
-            const int x_prev = x_in_tile - 1024, y_prev = y_in_tile - 1024;
-            if ((x_prev >= 0) && (y_prev >= 0))
-                mapTileElevsDiamondSquare(x_prev, x_in_tile, y_prev, y_in_tile);
+    // for (int x_in_map = this->tileX * 4, x = x_in_map; x <= x_in_map + 4; x++) {
+    //     for (int y_in_map = this->tileY * 4, y = y_in_map; y <= y_in_map + 4; y++) {
+    //         const float elev = this->worldElevMap.GetValue((x == mapWidth) ? 0 : x, (y == mapHeight) ? 0 : y);
+    //         const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
+    //         elevs_stash[x_in_tile][y_in_tile] = elev;
+    //     }
+    // }
+    // for (int y_in_map = this->tileY * 4, y = 0; y <= (y_in_map + 4); y++) {
+    //     for (int x_in_map = this->tileX * 4, x = 0; x <= (x_in_map + 4); x++) {
+    //         const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
+    //         const int x_prev = x_in_tile - 1024, y_prev = y_in_tile - 1024;
+    //         if ((x_prev >= 0) && (y_prev >= 0))
+    //             mapTileElevsInterpDiamondSquare(x_prev, x_in_tile, y_prev, y_in_tile);
+    //     }
+    // }
+
+    // for (int x = 0; x < mapTileSize; x++) {
+    //     float x_off = (((float)mapNumTilesX) / (float)mapTileSize) * (float)x;
+    //     for (int y = 0; y < mapTileSize; y++) {
+    //         float y_off = (((float)mapNumTilesY) / (float)mapTileSize) * (float)y;
+    //         float x_here = (float)(this->tileX * 1024) + x_off, y_here = (float)(this->tileY * 1024) + y_off;
+    //         float x_less = floorf(x_here), x_more = ceilf(x_here);
+    //         float y_less = floorf(y_here), y_more = ceilf(y_here);
+    //         float x_frac = x_here - x_less, y_frac = y_here - y_less;
+    //         // codeproject.com/Articles/5312360/2-D-Interpolation-Functions "constrained bicubic"
+    //         float elev = interpWeight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
+    //                      + interpWeight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
+    //                      + interpWeight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
+    //                      + interpWeight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
+    //         elevs_stash[x][y] = elev;
+    //     }
+    // }
+
+    int x_in_map = this->tileX * 4, y_in_map = this->tileY * 4;
+    for (int x = 0; x < mapTileSize; x++) {
+        float x_off = (((float)mapNumTilesX) / (float)mapTileSize) * (float)x;
+        for (int y = 0; y < mapTileSize; y++) {
         }
     }
 
@@ -432,7 +437,4 @@ void noiseMapFromBitmapFileBw(utils::NoiseMap* dest, sf::Image* imgBw) {
         }
         y_map--;
     }
-}
-
-void noiseMapFillHolesWithDiamondSquare() {
 }
