@@ -1,8 +1,10 @@
+#include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Event.hpp>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <functional>
@@ -14,8 +16,11 @@
 #include <string>
 
 #include "./mapgenview.h"
-#include "interp.h"
+#include "billow.h"
 #include "libnoise_utils/noiseutils.h"
+#include "ridgedmulti.h"
+#include "scalebias.h"
+#include "turbulence.h"
 
 
 const int worldWidthKm = 4096;
@@ -25,7 +30,8 @@ const int worldElevDistanceM = 10;
 const float worldDisplayScale = 0.75;
 
 
-void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs);
+void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs, bool bw0To1);
+void noiseMapFromBitmapFileBw(utils::NoiseMap* dest, sf::Image* imgBw);
 
 float mix(float x, float y, float a) {
     return (x * (1.0f - a)) + (y * a);
@@ -53,7 +59,7 @@ MapGenView::MapGenView() {
     this->worldElevGen.SetOctaveCount(30);
     this->worldElevGen.SetSeed(12);
     this->worldElevGen.SetPersistence(0.515);
-    this->worldElevGen.SetFrequency(1.221);
+    this->worldElevGen.SetFrequency(1.212);
     this->tileSelRect.setFillColor(sf::Color(255, 255, 255, 64));
     this->tileSelRect.setOutlineColor(sf::Color(255, 255, 255, 255));
     this->tileSelRect.setOutlineThickness(1.0);
@@ -85,6 +91,35 @@ MapGenView::MapGenView() {
 
     this->mapViewTileRect.setPosition(1024 + 64 + 512 + 64, 0);
     this->mapViewTileRect.setSize({512, 512});
+
+    {
+        const auto bmpFilePath = std::filesystem::absolute("../.local/temp_bill.bmp");
+        sf::Image img;
+        if (img.loadFromFile(bmpFilePath))
+            noiseMapFromBitmapFileBw(&this->repBillow, &img);
+        else {
+            noise::module::Billow billow;
+            billow.SetFrequency(0.0123);
+            billow.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+            billow.SetLacunarity(0.1 * worldElevGen.GetLacunarity());
+            billow.SetPersistence(0.1 * worldElevGen.GetPersistence());
+            billow.SetSeed(worldElevGen.GetSeed());
+            this->prepTileableLayer(billow, this->repBillow, bmpFilePath);
+        }
+    }
+    {
+        const auto bmpFilePath = std::filesystem::absolute("../.local/temp_ridg.bmp");
+        sf::Image img;
+        if (img.loadFromFile(bmpFilePath))
+            noiseMapFromBitmapFileBw(&this->repRidged, &img);
+        else {
+            noise::module::RidgedMulti ridged;
+            ridged.SetFrequency(0.0123);
+            ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
+            ridged.SetSeed(worldElevGen.GetSeed());
+            this->prepTileableLayer(ridged, this->repRidged, bmpFilePath);
+        }
+    }
 }
 
 void MapGenView::onInput(const sf::Event &evt) {
@@ -210,7 +245,7 @@ void MapGenView::reGenerate(bool tiny) {
 
     const auto out_file_path = std::filesystem::absolute("../.local/temp_" + std::string(tiny ? "tiny" : "full") + ".bmp");
     t_start = clock();
-    noiseMapToBitmapFile(out_file_path, this->worldElevMap);
+    noiseMapToBitmapFile(out_file_path, this->worldElevMap, false);
     t_end = clock();
 
     if (tiny) {
@@ -261,7 +296,7 @@ void MapGenView::generateTileOrArea() {
     }
 
     const auto out_file_path_tile = std::filesystem::absolute("../.local/temp_tile.bmp");
-    noiseMapToBitmapFile(out_file_path_tile, elev_tile);
+    noiseMapToBitmapFile(out_file_path_tile, elev_tile, false);
 
     this->mapViewTileTex.loadFromFile(out_file_path_tile);
     this->mapViewTileRect.setTexture(&this->mapViewTileTex);
@@ -270,10 +305,47 @@ void MapGenView::generateTileOrArea() {
     fflush(stdout);
 }
 
-void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs) {
+void MapGenView::prepTileableLayer(module::Module &module, utils::NoiseMap &destMap, std::string outFilePath) {
+    utils::NoiseMapBuilderPlane builder;
+    builder.SetDestNoiseMap(destMap);
+    builder.SetDestSize(worldTileSize, worldTileSize);
+    builder.SetBounds(0, worldTileSize, 0, worldTileSize);
+    noise::module::Turbulence turb;
+    turb.SetSourceModule(0, module);
+    turb.SetPower(1);
+    turb.SetFrequency(4.0);
+    turb.SetSeed(worldElevGen.GetSeed());
+    builder.SetSourceModule(turb);
+    builder.EnableSeamless(true);
+    builder.Build();
+
+    float elev_max = -3.21f, elev_min = 3.21f;
+    for (int x = 0; x < worldTileSize; x++)
+        for (int y = 0; y < worldTileSize; y++) {
+            float value = destMap.GetValue(x, y);
+            elev_max = std::max(value, elev_max);
+            elev_min = std::min(value, elev_min);
+        }
+    float elev_range = elev_max - elev_min;
+    for (int x = 0; x < worldTileSize; x++)
+        for (int y = 0; y < worldTileSize; y++) {
+            float elev = destMap.GetValue(x, y);
+            elev = elev - elev_min;
+            elev = elev / elev_range;
+            if (elev < 0 || elev > 1) {
+                printf("%f\n", elev);
+            }
+            destMap.SetValue(x, y, elev);
+        }
+
+    fflush(stdout);
+    noiseMapToBitmapFile(outFilePath, destMap, true);
+}
+
+void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap mapElevs, bool bw0To1) {
     utils::RendererImage renderer;
     renderer.SetSourceNoiseMap(mapElevs);
-    { // coloring
+    if (!bw0To1) { // coloring
         renderer.ClearGradient();
         renderer.AddGradientPoint(-1.000f, utils::Color(0, 0, 128, 255));  // very-deeps
         renderer.AddGradientPoint(-0.220, utils::Color(0, 0, 255, 255));   // water
@@ -289,6 +361,10 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
         renderer.EnableLight();
         renderer.SetLightContrast(3.21);
         renderer.SetLightBrightness(2.34);
+    } else {
+        renderer.ClearGradient();
+        renderer.AddGradientPoint(0, utils::Color(0, 0, 0, 255));
+        renderer.AddGradientPoint(1, utils::Color(255, 255, 255, 255));
     }
     utils::Image image;
     renderer.SetDestImage(image);
@@ -298,4 +374,17 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
     writer.SetSourceImage(image);
     writer.SetDestFilename(outFilePath);
     writer.WriteDestFile();
+}
+
+void noiseMapFromBitmapFileBw(utils::NoiseMap* dest, sf::Image* imgBw) {
+    const auto size_img = imgBw->getSize();
+    int y_map = 0;
+    for (uint x = 0; x < size_img.x; x++) {
+        for (uint y = size_img.y - 1; y >= 0; y--) {
+            const auto bw = imgBw->getPixel(x, y);
+            const float elev = ((float)bw.r) / 255.0f;
+            dest->SetValue(x, y_map, elev);
+        }
+        y_map++;
+    }
 }

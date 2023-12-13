@@ -21,17 +21,20 @@ struct MapGenView : AppView {
 
     void reGenerate(bool tiny);
     void generateTileOrArea();
+    void prepTileableLayer(module::Module &module, utils::NoiseMap &intoMap, std::string outFilePath);
 
     std::string seedName = "world";
     noise::module::Perlin worldElevGen;
     utils::NoiseMap worldElevMap;
+    utils::NoiseMap repRidged;
+    utils::NoiseMap repBillow;
+    sf::RectangleShape mapViewTinyRect;
     sf::RectangleShape tileSelRect;
     sf::Vector2i numTiles;
     float mouseX = -1.0;
     float mouseY = -1.0;
     int tileX = -1;
     int tileY = -1;
-    sf::RectangleShape mapViewTinyRect;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
     sf::Texture mapViewFullTex;
