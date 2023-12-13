@@ -1,32 +1,20 @@
+#include <filesystem>
+#include <map>
+
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+
 #include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Event.hpp>
-#include <algorithm>
-#include <cctype>
-#include <cmath>
-#include <cstdio>
-#include <filesystem>
-#include <functional>
-#include <map>
-
-#include <imgui.h>
-#include <math.h>
-#include <misc/cpp/imgui_stdlib.h>
-#include <string>
 
 #include "./mapgenview.h"
-#include "billow.h"
 #include "libnoise_utils/noiseutils.h"
-#include "ridgedmulti.h"
-#include "scalebias.h"
-#include "turbulence.h"
-
 
 const int worldWidthKm = 4096;
 const int worldHeightKm = 2048;
 const int worldTileSize = 4096;
-const int worldElevDistanceM = 10;
 const float worldDisplayScale = 0.75;
 
 
@@ -48,12 +36,15 @@ float smoothstep(float edge0, float edge1, float x) {
 float interpWeight(float x, float y) {
     return (x * x) * (y * y) * (9 - 6 * x - 6 * y + 4 * x * y);
 }
+bool isPowerOf2(int n) {
+    return (n > 0) && (0 == (n & (n - 1)));
+}
 
 
 MapGenView::MapGenView() {
-    const auto num_tiles_x = ((worldWidthKm * 1000) / worldElevDistanceM) / worldTileSize /*tile size*/;
-    const auto num_tiles_y = ((worldHeightKm * 1000) / worldElevDistanceM) / worldTileSize /*tile size*/;
-    this->numTiles = {num_tiles_x, num_tiles_y};
+    if (!this->checkTileElevDistValidAndSetNumTiles())
+        throw this->tileElevDistM;
+
     this->worldElevGen.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
     this->worldElevGen.SetLacunarity(2.121);
     this->worldElevGen.SetOctaveCount(30);
@@ -65,8 +56,8 @@ MapGenView::MapGenView() {
     this->tileSelRect.setOutlineThickness(1.0);
     this->tileSelRect.setOrigin(0, 0);
     this->tileSelRect.setPosition(0, 512 + 16);
-    this->tileSelRect.setSize({((worldDisplayScale * (float)worldWidthKm) / (float)num_tiles_x),
-                               ((worldDisplayScale * (float)worldHeightKm) / (float)num_tiles_y)});
+    this->tileSelRect.setSize({((worldDisplayScale * (float)worldWidthKm) / (float)this->numTiles.x),
+                               ((worldDisplayScale * (float)worldHeightKm) / (float)this->numTiles.y)});
     for (auto rect_and_tex : std::map<sf::Texture*, sf::RectangleShape*> {
              {&this->mapViewTinyTex, &this->mapViewTinyRect},
              {&this->mapViewFullTex, &this->mapViewFullRect},
@@ -116,6 +107,19 @@ MapGenView::MapGenView() {
             this->prepTileableLayer(ridged, this->repRidged, ridged.GetFrequency(), bmpFilePath);
         }
     }
+}
+
+bool MapGenView::checkTileElevDistValidAndSetNumTiles() {
+    if ((this->tileElevDistM <= 0) || (this->tileElevDistM >= 1000) || ((1000 % this->tileElevDistM) != 0))
+        return false;
+    int x_mod = ((worldWidthKm * 1000) % this->tileElevDistM), y_mod = ((worldHeightKm * 1000) % this->tileElevDistM);
+    if ((x_mod != 0) || (y_mod != 0))
+        return false;
+    int x_div = ((worldWidthKm * 1000) / this->tileElevDistM), y_div = ((worldHeightKm * 1000) / this->tileElevDistM);
+    if (((x_div % worldTileSize) != 0) || ((y_div % worldTileSize) != 0))
+        return false;
+    this->numTiles = {x_div / worldTileSize, y_div / worldTileSize};
+    return true;
 }
 
 void MapGenView::onInput(const sf::Event &evt) {
@@ -177,6 +181,9 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
+    if (this->seedName.size() == 0)
+        return;
+
     auto ascii = std::string(this->seedName);
     std::transform(ascii.begin(), ascii.end(), ascii.begin(), toascii);
     auto lower = std::string(ascii);
@@ -186,6 +193,7 @@ void MapGenView::reGenerate(bool tiny) {
     std::hash<std::string> hasher;
     auto hash = hasher(upper + lower);
     this->worldElevGen.SetSeed((int)hash);
+    srand(hash);
 
     this->mapViewTileRect.setTexture(nullptr);
     this->tileY = -1.0;
@@ -273,31 +281,21 @@ void MapGenView::reGenerate(bool tiny) {
 void MapGenView::generateTile() {
     if ((this->tileX < 0) || (this->tileX >= this->numTiles.x) || (this->tileY < 0) || (this->tileY >= this->numTiles.y))
         return;
+    if (!this->checkTileElevDistValidAndSetNumTiles())
+        throw this->tileElevDistM;
+
     utils::NoiseMap elev_tile;
     elev_tile.SetSize(worldTileSize, worldTileSize);
 
-    float x_full = ((float)worldWidthKm) * ((float)this->tileX / (float)this->numTiles.x);
-    float y_full = ((float)worldHeightKm) * ((float)this->tileY / (float)this->numTiles.y);
-    float x_num = ((float)worldWidthKm) / ((float)this->numTiles.x);
-    float y_num = ((float)worldHeightKm) / ((float)this->numTiles.y);
-    for (int x = 0; x < worldTileSize; x++) {
-        float x_off = (x_num / (float)worldTileSize) * (float)x;
+    int x_in_full = worldWidthKm * (this->tileX / this->numTiles.x);
+    int y_in_full = worldHeightKm * (this->tileY / this->numTiles.y);
+    int x_num = worldWidthKm / this->numTiles.x;
+    int y_num = worldHeightKm / this->numTiles.y;
+
+    for (int x = 0; x < worldTileSize; x++)
         for (int y = 0; y < worldTileSize; y++) {
-            float y_off = (y_num / (float)worldTileSize) * (float)y;
-            float x_here = x_full + x_off, y_here = y_full + y_off;
-            float x_less = floorf(x_here), x_more = ceilf(x_here);
-            float y_less = floorf(y_here), y_more = ceilf(y_here);
-            float x_frac = x_here - x_less, y_frac = y_here - y_less;
-
-            // codeproject.com/Articles/5312360/2-D-Interpolation-Functions "constrained bicubic"
-            float elev = interpWeight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
-                         + interpWeight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
-                         + interpWeight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
-                         + interpWeight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
-
-            elev_tile.SetValue(x, y, (float)elev);
+            elev_tile.SetValue(x, y, -1);
         }
-    }
 
     const auto out_file_path_tile = std::filesystem::absolute("../.local/temp_tile.bmp");
     noiseMapToBitmapFile(out_file_path_tile, elev_tile, false);
@@ -363,9 +361,9 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
         renderer.AddGradientPoint(0.750, utils::Color(160, 160, 160, 255));
         renderer.AddGradientPoint(1.000, utils::Color(192, 192, 192, 255));
         renderer.AddGradientPoint(1.234, utils::Color(255, 96, 0, 255));
-        renderer.EnableLight();
-        renderer.SetLightContrast(3.21);
-        renderer.SetLightBrightness(2.34);
+        // renderer.EnableLight();
+        // renderer.SetLightContrast(3.21);
+        // renderer.SetLightBrightness(2.34);
     } else {
         renderer.ClearGradient();
         renderer.AddGradientPoint(0, utils::Color(0, 0, 0, 255));
@@ -394,4 +392,7 @@ void noiseMapFromBitmapFileBw(utils::NoiseMap* dest, sf::Image* imgBw) {
         }
         y_map--;
     }
+}
+
+void noiseMapFillHolesWithDiamondSquare() {
 }
