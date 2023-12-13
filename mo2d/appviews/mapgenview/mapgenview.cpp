@@ -164,7 +164,7 @@ void MapGenView::onUpdate(const sf::Time &) {
     ImGui::LabelText("Mouse", "x,y=%.2f,%.2f", this->mouseX, this->mouseY);
 
     int xy[2] {this->tileX, this->tileY};
-    if (ImGui::InputInt2("const char *label", xy)) {
+    if (ImGui::InputInt2("Tiles x,y", xy)) {
         this->tileX = xy[0];
         this->tileY = xy[1];
     }
@@ -289,46 +289,32 @@ void MapGenView::generateTile() {
     utils::NoiseMap elev_tile;
     elev_tile.SetSize(mapTileSize, mapTileSize);
 
-    // for (int x_in_map = this->tileX * 4, x = x_in_map; x <= x_in_map + 4; x++) {
-    //     for (int y_in_map = this->tileY * 4, y = y_in_map; y <= y_in_map + 4; y++) {
-    //         const float elev = this->worldElevMap.GetValue((x == mapWidth) ? 0 : x, (y == mapHeight) ? 0 : y);
-    //         const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
-    //         elevs_stash[x_in_tile][y_in_tile] = elev;
-    //     }
-    // }
-    // for (int y_in_map = this->tileY * 4, y = 0; y <= (y_in_map + 4); y++) {
-    //     for (int x_in_map = this->tileX * 4, x = 0; x <= (x_in_map + 4); x++) {
-    //         const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
-    //         const int x_prev = x_in_tile - 1024, y_prev = y_in_tile - 1024;
-    //         if ((x_prev >= 0) && (y_prev >= 0))
-    //             mapTileElevsInterpDiamondSquare(x_prev, x_in_tile, y_prev, y_in_tile);
-    //     }
-    // }
-
-    // for (int x = 0; x < mapTileSize; x++) {
-    //     float x_off = (((float)mapNumTilesX) / (float)mapTileSize) * (float)x;
-    //     for (int y = 0; y < mapTileSize; y++) {
-    //         float y_off = (((float)mapNumTilesY) / (float)mapTileSize) * (float)y;
-    //         float x_here = (float)(this->tileX * 1024) + x_off, y_here = (float)(this->tileY * 1024) + y_off;
-    //         float x_less = floorf(x_here), x_more = ceilf(x_here);
-    //         float y_less = floorf(y_here), y_more = ceilf(y_here);
-    //         float x_frac = x_here - x_less, y_frac = y_here - y_less;
-    //         // codeproject.com/Articles/5312360/2-D-Interpolation-Functions "constrained bicubic"
-    //         float elev = interpWeight(1 - x_frac, 1 - y_frac) * worldElevMap.GetValue(x_less, y_less)
-    //                      + interpWeight(x_frac, 1 - y_frac) * worldElevMap.GetValue(x_more, y_less)
-    //                      + interpWeight(1 - x_frac, y_frac) * worldElevMap.GetValue(x_less, y_more)
-    //                      + interpWeight(x_frac, y_frac) * worldElevMap.GetValue(x_more, y_more);
-    //         elevs_stash[x][y] = elev;
-    //     }
-    // }
-
-    int x_in_map = this->tileX * 4, y_in_map = this->tileY * 4;
-    for (int x = 0; x < mapTileSize; x++) {
-        float x_off = (((float)mapNumTilesX) / (float)mapTileSize) * (float)x;
-        for (int y = 0; y < mapTileSize; y++) {
+    for (int x_in_map = this->tileX * 4, x = x_in_map; x <= x_in_map + 4; x++) {
+        for (int y_in_map = this->tileY * 4, y = y_in_map; y <= y_in_map + 4; y++) {
+            const float elev = this->worldElevMap.GetValue((x == mapWidth) ? 0 : x, (y == mapHeight) ? 0 : y);
+            const int x_in_tile = (x - x_in_map) * 1024, y_in_tile = (y - y_in_map) * 1024;
+            elevs_stash[x_in_tile][y_in_tile] = elev;
         }
     }
-
+    for (uint x = 0; x < mapTileSize; x++)
+        for (uint y = 0; y < mapTileSize; y++) {
+            uint x_mod = x % 1024, y_mod = y % 1024;
+            if ((x_mod == 0) && (y_mod == 0))
+                continue;
+            const uint x_prev = x - x_mod, y_prev = y - y_mod;
+            const uint x_next = x_prev + 1024, y_next = y_prev + 1024;
+            if ((x_prev < 0) || (x_next > mapTileSize) || (y_prev < 0) || (y_next > mapTileSize))
+                continue;
+            const float elev_tl = elevs_stash[x_prev][y_prev], elev_tr = elevs_stash[x_next][y_prev],
+                        elev_bl = elevs_stash[x_prev][y_next], elev_br = elevs_stash[x_next][y_next];
+            const float x_weight = ((float)(x - x_prev)) / 1024.0f, // 256/1024=0.25   768/1024=0.75
+                y_weight = ((float)(y - y_prev)) / 1024.0f;
+            // codeproject.com/Articles/5312360/2-D-Interpolation-Functions "constrained bicubic"
+            elevs_stash[x][y] = interpWeight(1.0f - x_weight, 1.0f - y_weight) * elev_tl
+                                + interpWeight(x_weight, 1.0f - y_weight) * elev_tr
+                                + interpWeight(1.0f - x_weight, y_weight) * elev_bl
+                                + interpWeight(x_weight, y_weight) * elev_br;
+        }
     for (int x = 0; x < mapTileSize; x++)
         for (int y = 0; y < mapTileSize; y++)
             elev_tile.SetValue(x, y, elevs_stash[x][y]);
