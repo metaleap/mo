@@ -114,7 +114,7 @@ MapGenView::MapGenView() {
             noiseMapFromBitmapFileBw(&this->repRidged, &img);
         else {
             noise::module::RidgedMulti ridged;
-            ridged.SetFrequency(0.0123);
+            ridged.SetFrequency(0.0044);
             ridged.SetNoiseQuality(NoiseQuality::QUALITY_BEST);
             ridged.SetSeed(worldElevGen.GetSeed());
             this->prepTileableLayer(ridged, this->repRidged, bmpFilePath);
@@ -152,14 +152,7 @@ void MapGenView::onInput(const sf::Event &evt) {
 void MapGenView::onUpdate(const sf::Time &) {
     ImGui::Begin("MapGen");
     {
-        if (ImGui::InputText("Map Name", &this->seedName)) {
-            std::transform(this->seedName.begin(), this->seedName.end(), this->seedName.begin(), tolower);
-            auto upper = std::string(this->seedName);
-            std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
-            std::hash<std::string> hasher;
-            auto hash = hasher(this->seedName + upper);
-            this->worldElevGen.SetSeed((int)hash);
-        }
+        ImGui::InputText("Map Name", &this->seedName);
         float gappiness = (float)(worldElevGen.GetLacunarity());
         if (ImGui::InputFloat("Lacunarity (Gappiness)", &gappiness))
             worldElevGen.SetLacunarity(gappiness);
@@ -189,6 +182,14 @@ void MapGenView::onRender(sf::RenderWindow &window) {
 }
 
 void MapGenView::reGenerate(bool tiny) {
+    auto lower = std::string(this->seedName);
+    std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
+    auto upper = std::string(lower);
+    std::transform(upper.begin(), upper.end(), upper.begin(), toupper);
+    std::hash<std::string> hasher;
+    auto hash = hasher(lower + upper);
+    this->worldElevGen.SetSeed((int)hash);
+
     this->mapViewAreaRect.setTexture(nullptr);
     this->mapViewTileRect.setTexture(nullptr);
     this->tileY = -1.0;
@@ -226,17 +227,17 @@ void MapGenView::reGenerate(bool tiny) {
                 height_max = std::max(height_max, height);
                 height_min = std::min(height_min, height);
             }
-        const float scale_factor_below = -0.5f / height_min;
-        const float scale_factor_above = 0.5f / height_max;
+        const float scale_factor_below = -0.987654321f / height_min;
+        const float scale_factor_above = 0.7f / height_max;
         for (int w = this->worldElevMap.GetWidth(), h = this->worldElevMap.GetHeight(), x = 0; x < w; x++)
-            for (int y = 0; y < h; y++) { // planet of love
+            for (int y = 0; y < h; y++) { //
+
                 float elev = this->worldElevMap.GetValue(x, y);
                 elev = elev * ((elev < 0) ? scale_factor_below : scale_factor_above);
-                const float ridged = 0.5f * this->repRidged.GetValue(x, y);
-                const float billow = 0.5f * this->repBillow.GetValue(x, y);
-                if (elev > 0)
+                const float ridged = 0.3f * this->repRidged.GetValue(x, y);
+                const float billow = 0.3f * this->repBillow.GetValue(x, y);
+                if (elev >= -0.01f)
                     elev = elev + mix(billow, ridged, elev * 2.0f);
-
                 height_max_new = std::max(height_max_new, elev);
                 height_min_new = std::min(height_min_new, elev);
                 this->worldElevMap.SetValue(x, y, elev);
