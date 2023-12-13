@@ -22,7 +22,6 @@ struct MapGenView : AppView {
     void reGenerate(bool tiny);
     void generateTile();
     void prepTileableLayer(module::Module &module, utils::NoiseMap &destMap, double srcFreq, std::string outFilePath);
-    bool checkTileElevDistValidAndSetNumTiles();
 
     std::string seedName = "foobar";
     noise::module::Perlin worldElevGen;
@@ -31,15 +30,15 @@ struct MapGenView : AppView {
     utils::NoiseMap repBillow;
     sf::RectangleShape mapViewTinyRect;
     sf::RectangleShape tileSelRect;
-    sf::Vector2i numTiles;
     float mouseX = -1.0;
     float mouseY = -1.0;
     int tileX = -1;
     int tileY = -1;
-    int tileElevDistM = 8;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
     sf::Texture mapViewFullTex;
-    sf::RectangleShape mapViewTileRect;
-    sf::Texture mapViewTileTex;
+    sf::RectangleShape mapViewTileColRect;
+    sf::Texture mapViewTileColTex;
+    sf::RectangleShape mapViewTileBwRect;
+    sf::Texture mapViewTileBwTex;
 };
