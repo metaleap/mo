@@ -30,13 +30,15 @@ struct MapGenView : AppView {
     utils::NoiseMap repBillow;
     sf::RectangleShape mapViewTinyRect;
     sf::RectangleShape tileSelRect;
-    float mouseX = -1.0;
-    float mouseY = -1.0;
+    int mouseTileX = -1.0;
+    int mouseTileY = -1.0;
+    bool mouseTileLocked = false;
     int tileX = 240;
     int tileY = 265;
     sf::Texture mapViewTinyTex;
     sf::RectangleShape mapViewFullRect;
     sf::Texture mapViewFullTex;
+    sf::RectangleShape mapViewTileRuffRect;
     sf::RectangleShape mapViewTileColRect;
     sf::Texture mapViewTileColTex;
     sf::RectangleShape mapViewTileBwRect;

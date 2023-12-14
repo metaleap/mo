@@ -73,6 +73,7 @@ MapGenView::MapGenView() {
     }
     this->mapViewTileColTex.setSmooth(false);
     this->mapViewTileBwTex.setSmooth(false);
+    this->mapViewFullTex.setSmooth(false);
 
     this->mapViewFullRect.setPosition(0, 512 + 64);
     this->mapViewFullRect.setSize({(mapDisplayScale * (float)mapWidth), (mapDisplayScale * (float)mapHeight)});
@@ -80,10 +81,13 @@ MapGenView::MapGenView() {
     this->mapViewTinyRect.setPosition(0, 0);
     this->mapViewTinyRect.setSize({1024, 512});
 
-    this->mapViewTileColRect.setPosition(1024 + 64, 0);
+    this->mapViewTileRuffRect.setPosition(1024 + 64, 0);
+    this->mapViewTileRuffRect.setSize({512, 512});
+
+    this->mapViewTileColRect.setPosition(1024 + 64 + 512 + 64, 0);
     this->mapViewTileColRect.setSize({512, 512});
 
-    this->mapViewTileBwRect.setPosition(1024 + 64 + 512 + 64, 0);
+    this->mapViewTileBwRect.setPosition(1024 + 64 + 512 + 64 + 512 + 64, 0);
     this->mapViewTileBwRect.setSize({512, 512});
 
     {
@@ -118,22 +122,27 @@ MapGenView::MapGenView() {
 
 void MapGenView::onInput(const sf::Event &evt) {
     const auto pos_mapview = mapViewFullRect.getPosition();
-    if (evt.type == sf::Event::MouseMoved) {
+    if ((!this->mouseTileLocked) && (evt.type == sf::Event::MouseMoved)) {
         auto mx = (float)evt.mouseMove.x, my = (float)evt.mouseMove.y;
         const auto size_mapview = mapViewFullRect.getSize();
         if ((mx >= pos_mapview.x) && (mx <= (pos_mapview.x + size_mapview.x)) && (my >= pos_mapview.y)
             && (my <= (pos_mapview.y + size_mapview.y))) {
-            this->mouseX = (mx - pos_mapview.x) / size_mapview.x;          // 0..1
-            this->mouseY = 1.0f - ((my - pos_mapview.y) / size_mapview.y); // 0..1
+            float mouse_x = (mx - pos_mapview.x) / size_mapview.x;          // 0..1
+            float mouse_y = 1.0f - ((my - pos_mapview.y) / size_mapview.y); // 0..1
+            this->mouseTileX = (int)(mouse_x * (float)mapNumTilesX);
+            this->mouseTileY = (int)(mouse_y * (float)mapNumTilesY);
+
+            this->mapViewTileRuffRect.setTextureRect({this->mouseTileX * 4, (511 - this->mouseTileY) * 4, 4, 4});
         } else {
-            this->mouseX = -1.0;
-            this->mouseY = -1.0;
+            this->mouseTileX = -1.0;
+            this->mouseTileY = -1.0;
         }
     }
     if ((evt.type == sf::Event::MouseButtonReleased)) {
-        if ((this->mouseX >= 0) && (this->mouseX < 1.0) && ((this->mouseY >= 0) && (this->mouseY < 1.0))) {
-            this->tileX = (int)(this->mouseX * (float)mapNumTilesX);
-            this->tileY = (int)(this->mouseY * (float)mapNumTilesY);
+        if ((this->mouseTileX >= 0) && (this->mouseTileY >= 0)) {
+            this->mouseTileLocked = true;
+            this->tileX = this->mouseTileX;
+            this->tileY = this->mouseTileY;
             const auto size_rect = mapViewFullRect.getSize();
             auto sel_tile_x = size_rect.x * ((float)this->tileX / (float)mapNumTilesX);
             auto sel_tile_y =
@@ -161,7 +170,7 @@ void MapGenView::onUpdate(const sf::Time &) {
         this->reGenerate(true);
     if (ImGui::Button("Full"))
         this->reGenerate(false);
-    ImGui::LabelText("Mouse", "x,y=%.2f,%.2f", this->mouseX, this->mouseY);
+    ImGui::LabelText("Mouse", "x,y=%d,%d", this->mouseTileX, this->mouseTileY);
 
     int xy[2] {this->tileX, this->tileY};
     if (ImGui::InputInt2("Tiles x,y", xy)) {
@@ -176,6 +185,7 @@ void MapGenView::onUpdate(const sf::Time &) {
 void MapGenView::onRender(sf::RenderWindow &window) {
     window.draw(this->mapViewFullRect);
     window.draw(this->mapViewTinyRect);
+    window.draw(this->mapViewTileRuffRect);
     window.draw(this->mapViewTileColRect);
     window.draw(this->mapViewTileBwRect);
     window.draw(this->tileSelRect);
@@ -245,7 +255,8 @@ void MapGenView::reGenerate(bool tiny) {
                 const float billow = 0.44f * this->repBillow.GetValue(x, y);
 
                 float elev_m = elev * 1000.0f;
-                elev = elev + mix(0.0f, mix(billow, ridged, elev + 0.44f), std::clamp(elev_m, 0.0f, 1.0f));
+                elev =
+                    elev + mix(0.0f, std::clamp(mix(billow, ridged, 0.789f), -1.0f, 1.0f), std::clamp(elev_m, 0.0f, 1.0f));
                 height_max_new = std::max(height_max_new, elev);
                 height_min_new = std::min(height_min_new, elev);
                 this->worldElevMap.SetValue(x, y, elev);
@@ -276,6 +287,8 @@ void MapGenView::reGenerate(bool tiny) {
         this->mapViewFullRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
         this->mapViewTinyRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex.x), (int)(size_tex.y)});
         this->mapViewTinyRect.setTexture(&this->mapViewFullTex);
+        this->mapViewTileRuffRect.setTexture(&this->mapViewFullTex);
+        this->mapViewTileRuffRect.setTextureRect(sf::IntRect {0, 0, 4, 4});
     }
 
     printf("%s: %fsec\n", out_file_path.c_str(), (float)(t_end - t_start) / CLOCKS_PER_SEC);
@@ -317,11 +330,11 @@ void MapGenView::generateTile() {
         }
     for (int x = 0; x < mapTileSize; x++)
         for (int y = 0; y < mapTileSize; y++) {
-            const float ridged = this->repRidged.GetValue(x, y);
-            const float billow = this->repBillow.GetValue(x, y);
             float elev = elevs_stash[x][y];
-            float elev_modulate = mix(billow, ridged, 0.333f) - 0.5f;
-            elev += (elev_modulate * 0.01f);
+            // const float ridged = this->repRidged.GetValue(x, y);
+            // const float billow = this->repBillow.GetValue(x, y);
+            // float elev_modulate = mix(billow, ridged, 0.333f) - 0.5f;
+            // elev += (elev_modulate * 0.01f);
             elev_tile.SetValue(x, y, std::clamp(elev, -1.0f, 1.0f));
         }
 
@@ -341,6 +354,7 @@ void MapGenView::generateTile() {
         const auto size_tex_tile = this->mapViewTileBwTex.getSize();
         this->mapViewTileBwRect.setTextureRect(sf::IntRect {0, 0, (int)(size_tex_tile.x), (int)(size_tex_tile.y)});
     }
+    this->mouseTileLocked = false;
     fflush(stdout);
 }
 
@@ -399,7 +413,7 @@ void noiseMapToBitmapFile(std::filesystem::path outFilePath, utils::NoiseMap map
         renderer.AddGradientPoint(1.000, utils::Color(192, 192, 192, 255));
         renderer.AddGradientPoint(1.234, utils::Color(255, 96, 0, 255));
         // renderer.EnableLight();
-        // renderer.SetLightContrast(3.21);
+        // renderer.SetLightContrast(3.45);
         // renderer.SetLightBrightness(2.34);
     } else {
         renderer.ClearGradient();
