@@ -4,8 +4,8 @@ CXX = g++
 CXXFLAGS = --debug -std=c++20 -march=native
 
 
-bin/mo2d.exec: bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
-	$(CXX) $(CXXFLAGS) -Lbin -lnoise -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo2d.exec
+bin/mo2d.exec: bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo2d_appviews_shaderview_shaderview.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
+	$(CXX) $(CXXFLAGS) -Lbin -lnoise -limgui -limgui-sfml -lsfml-graphics -lsfml-window -lsfml-system -lGL bin/mo2d_appviews_shaderview_shaderview.o bin/mo2d_gui_gui.o bin/mo2d_main.o bin/mo2d_appviews_liveview_liveview.o bin/mo2d_appviews_mapgenview_libnoise_utils_noiseutils.o bin/mo2d_appviews_mapgenview_mapgenview.o bin/mo2d_appviews_shaderview_gui_cheatsheets.o bin/mo2d_appviews_shaderview_gui_shaders.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo2d.exec
 
 bin/mo_noiselib_tuts.exec: bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_tuts.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o
 	$(CXX) $(CXXFLAGS) -Lbin -lnoise -limgui bin/mo_noiselib_tuts_main.o bin/mo_noiselib_tuts_noiseutils.o bin/mo_noiselib_tuts_tuts.o bin/mo_mo.o bin/mo_util_imgui_nodes_nodes.o -o bin/mo_noiselib_tuts.exec
