@@ -102,38 +102,41 @@ func main() {
 
 	var buf strings.Builder
 	buf.WriteString(makefilePrelude)
-	for _, rule := range rules {
-		for _, prog_name := range prog_names {
-			if rule.outPath == "bin/"+prog_name+"_main.o" {
-				obj_file_paths, is_first := map[string]bool{rule.outPath: true}, true
-				for _, src_file_path := range all_source_file_paths {
-					if strEnds(src_file_path, ".cpp") && strBegins(src_file_path, prog_name+"/") {
-						obj_file_paths["bin/"+fsCppPathToObjName(src_file_path)+".o"] = true
+	{
+		for _, rule := range rules {
+			for _, prog_name := range prog_names {
+				if rule.outPath == "bin/"+prog_name+"_main.o" {
+					obj_file_paths, is_first := []string{rule.outPath}, true
+					for _, src_file_path := range all_source_file_paths {
+						if strEnds(src_file_path, ".cpp") && strBegins(src_file_path, prog_name+"/") {
+							obj_file_paths = append(obj_file_paths, "bin/"+fsCppPathToObjName(src_file_path)+".o")
+						}
 					}
-				}
+					slices.Sort(obj_file_paths)
 
-				buf.WriteString("bin/" + prog_name + ".exec")
-				for obj_file_path := range obj_file_paths {
-					buf.WriteString(iIf(is_first, ": ", " ") + obj_file_path)
-					is_first = false
+					buf.WriteString("bin/" + prog_name + ".exec")
+					for _, obj_file_path := range obj_file_paths {
+						buf.WriteString(iIf(is_first, ": ", " ") + obj_file_path)
+						is_first = false
+					}
+					for obj_file_path := range mo_obj_paths {
+						buf.WriteString(" " + obj_file_path)
+					}
+					buf.WriteByte('\n')
+					buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
+					for _, lib_name := range everLibNames[prog_name] {
+						buf.WriteString(" -l" + lib_name)
+					}
+					for _, obj_file_path := range obj_file_paths {
+						buf.WriteString(" " + obj_file_path)
+					}
+					for obj_file_path := range mo_obj_paths {
+						buf.WriteString(" " + obj_file_path)
+					}
+					buf.WriteString(" -o bin/" + prog_name + ".exec\n")
+					buf.WriteByte('\n')
+					break
 				}
-				for obj_file_path := range mo_obj_paths {
-					buf.WriteString(" " + obj_file_path)
-				}
-				buf.WriteByte('\n')
-				buf.WriteString("\t$(CXX) $(CXXFLAGS) -Lbin")
-				for _, lib_name := range everLibNames[prog_name] {
-					buf.WriteString(" -l" + lib_name)
-				}
-				for obj_file_path := range obj_file_paths {
-					buf.WriteString(" " + obj_file_path)
-				}
-				for obj_file_path := range mo_obj_paths {
-					buf.WriteString(" " + obj_file_path)
-				}
-				buf.WriteString(" -o bin/" + prog_name + ".exec\n")
-				buf.WriteByte('\n')
-				break
 			}
 		}
 	}
