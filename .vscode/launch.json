@@ -5,7 +5,7 @@
             "name": "Run",
             "type": "gdb",
             "request": "launch",
-            "target": "mo2d.exec",
+            "target": "mo3d.exec",
             "env": {
                 "__NV_PRIME_RENDER_OFFLOAD": "1",
                 "__VK_LAYER_NV_optimus": "NVIDIA_only",

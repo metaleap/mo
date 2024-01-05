@@ -1,3 +1,4 @@
-go run ./makemake.go mo2d mo_noiselib_tuts # mo3d
-make bin/mo_noiselib_tuts.exec
+go run ./makemake.go mo3d mo2d mo_noiselib_tuts
 make bin/mo2d.exec
+make bin/mo3d.exec
+make bin/mo_noiselib_tuts.exec
