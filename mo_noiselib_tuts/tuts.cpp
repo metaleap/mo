@@ -4,9 +4,9 @@
 #include <ctime>
 #include <noise/noise.h>
 #include <noise/module/perlin.h>
+#include <noise/module/select.h>
+#include <noise/module/turbulence.h>
 #include "noiseutils.h"
-#include "select.h"
-#include "turbulence.h"
 
 
 

@@ -5,7 +5,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 
-#include <noise.h>
+#include <noise/noise.h>
 
 #include "./libnoise_utils/noiseutils.h"
 

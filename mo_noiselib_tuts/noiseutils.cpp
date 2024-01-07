@@ -24,8 +24,8 @@
 
 #include <noise/interp.h>
 #include <noise/mathconsts.h>
+#include <noise/basictypes.h>
 
-#include "basictypes.h"
 #include "noiseutils.h"
 
 using namespace noise;

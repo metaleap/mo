@@ -1,4 +1,4 @@
-go run ./makemake.go mo3d mo2d mo_noiselib_tuts
+go run ./makemake.go # just _create_ the makefile in this step
+make bin/mo_noiselib_tuts.exec
 make bin/mo2d.exec
 make bin/mo3d.exec
-make bin/mo_noiselib_tuts.exec
