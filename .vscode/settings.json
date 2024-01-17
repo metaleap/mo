@@ -1,10 +1,16 @@
 {
     "files.exclude": {
         "**/.cache": true,
+        "**/*.exec": true,
+        "**/*.o": true,
+        "**/*.a": true,
         "**/*.so": true
     },
     "search.exclude": {
         "**/.cache": true,
+        "**/*.exec": true,
+        "**/*.o": true,
+        "**/*.a": true,
         "**/*.so": true
     }
 }

@@ -15,9 +15,9 @@ AllowShortBlocksOnASingleLine: false
 ColumnLimit: 123
 SpaceBeforeCpp11BracedList: true
 BreakBeforeBinaryOperators: NonAssignment
-AllowShortCaseLabelsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
 IndentCaseLabels: true
 PointerAlignment: Left
-ReferenceAlignment: Right
+ReferenceAlignment: Left
 BreakStringLiterals: false
 ...
