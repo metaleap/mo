@@ -21,7 +21,7 @@ int main() {
     sdl2::window_ptr_t sdl_win =
         sdl2::make_window("mo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 960,
                           SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS
-                          //   | SDL_WINDOW_RESIZABLE
+                          // | SDL_WINDOW_RESIZABLE
         );
 
     app.SetWindow(sdl_win.get());
@@ -62,7 +62,7 @@ int main() {
     const std::string ws27 = "water_test.wiscene";
     const std::string wi_scene_path = "/home/_/c/c/mo/libdeps/WickedEngine/Content/models/" + ws27;
     wi::scene::LoadModel(wi_scene_path);
-    wi::scene::GetScene();
+    wi::scene::Scene& sc = wi::scene::GetScene();
 
     mainLoop(app);
     SDL_Quit();

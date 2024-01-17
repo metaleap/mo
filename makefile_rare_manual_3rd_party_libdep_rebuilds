@@ -22,7 +22,7 @@ build_libnoise:
 build_wicked:
 	rm -rf __build_wicked
 	mkdir -p __build_wicked
-	cd __build_wicked && cmake ../libdeps/WickedEngine -DWICKED_DYNAMIC_LIBRARY=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo && make
+	cd __build_wicked && cmake ../libdeps/WickedEngine -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWICKED_DYNAMIC_LIBRARY=ON -DWICKED_EDITOR=OFF -DWICKED_TESTS=OFF -DWICKED_IMGUI_EXAMPLE=OFF -DWICKED_LINUX_TEMPLATE=OFF && make
 	cp __build_wicked/WickedEngine/libWickedEngine_Linux.so bin/libWickedEngine_Linux.so
 	cp __build_wicked/WickedEngine/libdxcompiler.so bin/
- 	rm -rf __build_wicked
+	rm -rf __build_wicked
